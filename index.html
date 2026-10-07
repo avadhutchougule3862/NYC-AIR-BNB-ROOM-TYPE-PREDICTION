@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>NYC Room-Type Predictor</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  
+
+  <!-- Background: three routes draw themselves once on page load -->
+  <svg class="routes" viewBox="0 0 1440 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <path class="route r-blue"   pathLength="1" d="M-20 300 H120 L200 220 H500 L580 140 H1000 L1080 60 H1460"/>
+    <path class="route r-green"  pathLength="1" d="M-20 120 H180 L260 200 H640 L720 280 H1100 L1180 200 H1460"/>
+    <path class="route r-orange" pathLength="1" d="M-20 420 H300 L380 340 H820 L900 260 H1460"/>
+    <g class="stops">
+      <circle cx="200" cy="220" r="9"/><circle cx="580" cy="140" r="9"/><circle cx="1080" cy="60" r="9"/>
+      <circle cx="260" cy="200" r="9"/><circle cx="720" cy="280" r="9"/><circle cx="1180" cy="200" r="9"/>
+      <circle cx="380" cy="340" r="9"/><circle cx="900" cy="260" r="9"/>
+    </g>
+  </svg>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">N</span>
+      <span class="brand-name">NYC Room-Type Predictor</span>
+    </div>
+    <button type="button" class="api-pill" id="api-pill" data-status="checking" aria-haspopup="dialog">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="api-pill-text">Checking API…</span>
+    </button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Entire home, private room, or shared room?</h1>
+      <p class="lede">Describe a New York Airbnb listing and the model tells you which room type it most likely is, with the odds for all three.</p>
+    </section>
+
+    <div class="layout">
+
+      <!-- ============== FORM ============== -->
+      <form id="predict-form" novalidate autocomplete="off">
+
+        <div class="presets" role="group" aria-labelledby="presets-label">
+          <span id="presets-label" class="presets-label">Start from an example</span>
+          <button type="button" class="preset" data-preset="midtown">Midtown loft</button>
+          <button type="button" class="preset" data-preset="williamsburg">Williamsburg apartment</button>
+          <button type="button" class="preset" data-preset="bushwick">Bushwick spare room</button>
+          <button type="button" class="preset" data-preset="hellskitchen">Hell's Kitchen bunk</button>
+          <button type="button" class="preset" data-preset="fordham">Fordham, hard call</button>
+        </div>
+
+        <!-- Where -->
+        <fieldset class="stop">
+          <legend>Where is it?</legend>
+
+          <div class="field">
+            <span class="label" id="borough-label">Borough</span>
+            <div class="chips" role="radiogroup" aria-labelledby="borough-label" id="borough-chips">
+              <label class="chip"><input type="radio" name="neighbourhood_group" value="Bronx"><span>Bronx</span></label>
+              <label class="chip"><input type="radio" name="neighbourhood_group" value="Brooklyn"><span>Brooklyn</span></label>
+              <label class="chip"><input type="radio" name="neighbourhood_group" value="Manhattan" checked><span>Manhattan</span></label>
+              <label class="chip"><input type="radio" name="neighbourhood_group" value="Queens"><span>Queens</span></label>
+              <label class="chip"><input type="radio" name="neighbourhood_group" value="Staten Island"><span>Staten Island</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="neighbourhood">Neighbourhood</label>
+            <div class="combo" id="combo">
+              <input id="neighbourhood" name="neighbourhood" type="text" role="combobox"
+                     aria-expanded="false" aria-controls="hood-list" aria-autocomplete="list"
+                     placeholder="Start typing, e.g. Midtown" spellcheck="false">
+              <ul id="hood-list" role="listbox" aria-label="Neighbourhoods" hidden></ul>
+            </div>
+            <p class="error-text" id="err-neighbourhood" hidden></p>
+          </div>
+
+          <div class="field coords">
+            <div class="coords-inputs">
+              <div>
+                <label class="label" for="latitude">Latitude</label>
+                <input id="latitude" name="latitude" type="number" step="any" inputmode="decimal" value="40.7831">
+                <p class="error-text" id="err-latitude" hidden></p>
+              </div>
+              <div>
+                <label class="label" for="longitude">Longitude</label>
+                <input id="longitude" name="longitude" type="number" step="any" inputmode="decimal" value="-73.9712">
+                <p class="error-text" id="err-longitude" hidden></p>
+              </div>
+              <button type="button" class="link-btn" id="reset-coords">Move pin to borough center</button>
+            </div>
+
+            <div class="locator-wrap">
+              <svg id="locator" viewBox="0 0 265 220" role="img" aria-label="Locator. Click or drag to move the pin and set latitude and longitude.">
+                <g class="grid" id="locator-grid"></g>
+                <g id="locator-centers"></g>
+                <g id="pin" transform="translate(130 80)">
+                  <circle class="pin-ring" r="12"/>
+                  <circle class="pin-dot" r="5.5"/>
+                </g>
+              </svg>
+              <p class="hint">Click or drag on the locator to place the pin.</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Price and stay -->
+        <fieldset class="stop">
+          <legend>Price and stay</legend>
+
+          <div class="field">
+            <label class="label" for="price">Price per night</label>
+            <div class="pair">
+              <div class="prefixed"><span aria-hidden="true">$</span>
+                <input id="price" name="price" type="number" min="1" step="1" inputmode="numeric" value="150">
+              </div>
+              <input id="price-range" class="range" type="range" min="10" max="1000" step="5" value="150" aria-label="Price per night slider">
+            </div>
+            <p class="error-text" id="err-price" hidden></p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="minimum_nights">Minimum nights</label>
+            <div class="stepper" data-min="1" data-max="365" data-step="1">
+              <button type="button" data-dir="-1" aria-label="One fewer night">−</button>
+              <input id="minimum_nights" name="minimum_nights" type="number" min="1" max="365" step="1" inputmode="numeric" value="2">
+              <button type="button" data-dir="1" aria-label="One more night">+</button>
+            </div>
+            <p class="error-text" id="err-minimum_nights" hidden></p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="availability_365">Days available per year</label>
+            <div class="pair">
+              <input id="availability_365" name="availability_365" type="number" min="0" max="365" step="1" inputmode="numeric" value="180" class="narrow">
+              <input id="availability-range" class="range" type="range" min="0" max="365" step="1" value="180" aria-label="Days available slider">
+            </div>
+            <div class="year" id="year" aria-hidden="true"></div>
+            <p class="hint" id="year-note">About 6 months of the year</p>
+            <p class="error-text" id="err-availability_365" hidden></p>
+          </div>
+        </fieldset>
+
+        <!-- Reviews and host -->
+        <fieldset class="stop">
+          <legend>Reviews and host</legend>
+
+          <div class="trio">
+            <div class="field">
+              <label class="label" for="number_of_reviews">Total reviews</label>
+              <div class="stepper" data-min="0" data-max="100000" data-step="1">
+                <button type="button" data-dir="-1" aria-label="One fewer review">−</button>
+                <input id="number_of_reviews" name="number_of_reviews" type="number" min="0" step="1" inputmode="numeric" value="25">
+                <button type="button" data-dir="1" aria-label="One more review">+</button>
+              </div>
+              <p class="error-text" id="err-number_of_reviews" hidden></p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="reviews_per_month">Reviews per month</label>
+              <div class="stepper" data-min="0" data-max="100" data-step="0.1">
+                <button type="button" data-dir="-1" aria-label="Fewer reviews per month">−</button>
+                <input id="reviews_per_month" name="reviews_per_month" type="number" min="0" step="any" inputmode="decimal" value="0.8">
+                <button type="button" data-dir="1" aria-label="More reviews per month">+</button>
+              </div>
+              <p class="error-text" id="err-reviews_per_month" hidden></p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="calculated_host_listings_count">Host's listings</label>
+              <div class="stepper" data-min="0" data-max="10000" data-step="1">
+                <button type="button" data-dir="-1" aria-label="One fewer listing">−</button>
+                <input id="calculated_host_listings_count" name="calculated_host_listings_count" type="number" min="0" step="1" inputmode="numeric" value="1">
+                <button type="button" data-dir="1" aria-label="One more listing">+</button>
+              </div>
+              <p class="error-text" id="err-calculated_host_listings_count" hidden></p>
+            </div>
+          </div>
+          <p class="hint">No reviews yet? Set both review fields to 0.</p>
+        </fieldset>
+
+        <div class="submit-row">
+          <button type="submit" class="primary" id="submit-btn">
+            <span class="btn-label">Predict room type</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="link-btn" id="reset-form">Reset form</button>
+        </div>
+      </form>
+
+      <!-- ============== RESULT ============== -->
+      <aside class="result" id="result" data-state="idle" aria-live="polite" aria-labelledby="result-title">
+        <div class="result-head">
+          <h2 id="result-title">Prediction</h2>
+          <span class="latency" id="latency" hidden></span>
+        </div>
+
+        <div class="verdict">
+          <div class="bullet" id="bullet" aria-hidden="true">?</div>
+          <div class="verdict-text">
+            <p class="verdict-label" id="verdict-label">Waiting for a listing</p>
+            <p class="verdict-sub" id="verdict-sub">Fill in the details, then press Predict room type.</p>
+          </div>
+        </div>
+
+        <ul class="lines" id="lines"></ul>
+
+        <div class="error-box" id="error-box" role="alert" hidden>
+          <p class="error-title" id="error-title"></p>
+          <p class="error-body" id="error-body"></p>
+        </div>
+
+        <details class="payload" id="payload-box" hidden>
+          <summary>See what was sent to the API</summary>
+          <pre id="payload"></pre>
+          <button type="button" class="link-btn" id="copy-payload">Copy JSON</button>
+        </details>
+
+        <section class="history" aria-labelledby="history-title">
+          <div class="history-head">
+            <h3 id="history-title">Recent predictions</h3>
+            <button type="button" class="link-btn" id="clear-history" hidden>Clear</button>
+          </div>
+          <ol id="history-list"></ol>
+          <p class="empty" id="history-empty">Your predictions will collect here. Select one to reload its details into the form.</p>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Predictions come from the model behind your FastAPI server. The page only talks to the API address you set.</p>
+  </footer>
+
+  <!-- API settings -->
+  <dialog id="api-dialog" aria-labelledby="api-dialog-title">
+    <form method="dialog" id="api-form">
+      <h2 id="api-dialog-title">API address</h2>
+      <p class="hint">Where your FastAPI server is running. Start it with <code>uvicorn main:app --reload</code>.</p>
+      <label class="label" for="api-url">Base URL</label>
+      <input id="api-url" type="url" placeholder="http://127.0.0.1:8000" spellcheck="false">
+      <p class="error-text" id="api-url-error" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="link-btn" id="api-default">Use default</button>
+        <button type="button" class="ghost" id="api-cancel">Cancel</button>
+        <button type="submit" class="primary small" id="api-save">Save and check</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+</body>
+</html>

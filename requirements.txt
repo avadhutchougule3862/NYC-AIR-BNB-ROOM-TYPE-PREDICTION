@@ -1,0 +1,12 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pandas>=2.1
+numpy>=1.26,<3
+joblib>=1.3
+
+# Model_Pipeline.pkl was saved with scikit-learn 1.6.1, so this exact version is
+# required to load it. 1.6.1 supports Python 3.9 - 3.13 (not 3.14).
+# If you retrain the model on a newer scikit-learn, replace this line with
+# that exact version, e.g. scikit-learn==1.8.0
+scikit-learn==1.6.1
