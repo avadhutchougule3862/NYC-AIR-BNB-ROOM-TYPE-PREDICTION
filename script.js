@@ -6,7 +6,7 @@
 
 /* ---------- Config ---------- */
 
-const DEFAULT_API = "http://127.0.0.1:8000";
+const DEFAULT_API = " https://nyc-air-bnb-room-type-prediction-rdg0.onrender.com";
 const STORE_API = "nyc-room-api-url";
 const STORE_HISTORY = "nyc-room-history";
 const HISTORY_MAX = 6;
@@ -842,3 +842,4 @@ renderIdleLines();
 renderHistory();
 syncAll();
 checkApi();
+
