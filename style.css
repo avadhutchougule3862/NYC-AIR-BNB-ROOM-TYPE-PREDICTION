@@ -292,7 +292,7 @@ input[type="text"], input[type="number"], input[type="url"] {
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   transition: border-color .2s, background .2s;
-  -moz-appearance: textfield;
+  appearance: textfield;
 }
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
