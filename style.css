@@ -1070,7 +1070,7 @@ dialog .label { margin-top: 1.1rem; }
   grid-template-columns: repeat(12, 1fr);
   gap: 8px;
   align-items: flex-end;
-  height: 190px;
+  height: 220px;
   padding: 10px 0 0;
   border-bottom: 1px solid var(--line);
 }
@@ -1084,27 +1084,32 @@ dialog .label { margin-top: 1.1rem; }
 }
 .bar-stick {
   width: 100%;
-  max-width: 32px;
-  background: var(--panel-2);
-  border-radius: 4px 4px 0 0;
+  max-width: 34px;
+  height: 135px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px 6px 0 0;
   display: flex;
   align-items: flex-end;
-  height: 100%;
   overflow: hidden;
   position: relative;
-  transition: all 0.3s;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.3s ease;
 }
 .bar-stick:hover {
-  filter: brightness(1.2);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 12px rgba(255, 210, 63, 0.25);
 }
 .bar-stick-fill {
   width: 100%;
-  background: linear-gradient(to top, var(--shared), var(--signal));
+  background: linear-gradient(to top, #0ea5e9, #34d17f);
   border-radius: 4px 4px 0 0;
-  transition: height 0.6s var(--ease-out);
+  transition: height 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s ease;
+  will-change: height;
 }
 .bar-stick-fill.summer-peak {
-  background: linear-gradient(to top, var(--home), var(--signal));
+  background: linear-gradient(to top, #ff7a2f, #ffd23f);
+  box-shadow: 0 0 12px rgba(255, 122, 47, 0.4);
 }
 .bar-m-name {
   font-size: 0.72rem;

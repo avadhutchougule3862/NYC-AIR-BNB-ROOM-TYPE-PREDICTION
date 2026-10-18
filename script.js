@@ -949,27 +949,62 @@ async function calculateDynamicPricing() {
     $("#dp-kpi-floor").textContent = `$${Math.round(data.recommended_off_season_floor)}`;
     $("#dp-annual-rev").textContent = `Annual: $${Math.round(data.projected_annual_revenue).toLocaleString()}`;
 
-    // Render 12 Seasonal Bars
+    // Render or smoothly update 12 Seasonal Bars
     const barsContainer = $("#dp-seasonal-bars");
-    barsContainer.replaceChildren();
-    const maxVal = Math.max(...data.monthly_schedule.map(m => m.average_adr), 1);
+    const existingCols = barsContainer.querySelectorAll(".bar-col");
 
-    data.monthly_schedule.forEach(m => {
-      const col = document.createElement("div");
-      col.className = "bar-col";
-      const heightPct = Math.round((m.average_adr / maxVal) * 100);
-      const isPeak = ["Jun", "Jul", "Aug", "Sep", "Dec"].includes(m.month);
+    const adrValues = data.monthly_schedule.map(m => m.average_adr);
+    const maxAdr = Math.max(...adrValues, 1);
+    
+    // Scale ceiling benchmark ($460) so lower rates sit low and luxury rates reach high
+    const scaleCeiling = Math.max(460, maxAdr * 1.08);
 
-      col.innerHTML = `
-        <span class="bar-m-val">$${Math.round(m.average_adr)}</span>
-        <div class="bar-stick" title="${m.month}: $${m.average_adr}/night (${m.occupancy_rate}% occupancy)">
-          <div class="bar-stick-fill ${isPeak ? 'summer-peak' : ''}" style="height: ${heightPct}%;"></div>
-        </div>
-        <span class="bar-m-name">${m.month}</span>
-        <span class="bar-m-occ">${m.occupancy_rate}%</span>
-      `;
-      barsContainer.appendChild(col);
-    });
+    if (existingCols.length === 12) {
+      // Smooth in-place height update with native CSS transition
+      data.monthly_schedule.forEach((m, idx) => {
+        const col = existingCols[idx];
+        const rawPct = (m.average_adr / scaleCeiling) * 100;
+        const heightPct = Math.max(12, Math.min(98, Math.round(rawPct)));
+        const isPeak = ["Jun", "Jul", "Aug", "Sep", "Dec"].includes(m.month);
+
+        const valEl = col.querySelector(".bar-m-val");
+        const fillEl = col.querySelector(".bar-stick-fill");
+        const occEl = col.querySelector(".bar-m-occ");
+
+        if (valEl) valEl.textContent = `$${Math.round(m.average_adr)}`;
+        if (occEl) occEl.textContent = `${m.occupancy_rate}%`;
+        if (fillEl) {
+          fillEl.style.height = `${heightPct}%`;
+          if (isPeak) fillEl.classList.add("summer-peak");
+          else fillEl.classList.remove("summer-peak");
+        }
+      });
+    } else {
+      // First-time build
+      barsContainer.replaceChildren();
+      data.monthly_schedule.forEach((m, idx) => {
+        const col = document.createElement("div");
+        col.className = "bar-col";
+        const rawPct = (m.average_adr / scaleCeiling) * 100;
+        const heightPct = Math.max(12, Math.min(98, Math.round(rawPct)));
+        const isPeak = ["Jun", "Jul", "Aug", "Sep", "Dec"].includes(m.month);
+
+        col.innerHTML = `
+          <span class="bar-m-val">$${Math.round(m.average_adr)}</span>
+          <div class="bar-stick" title="${m.month}: $${Math.round(m.average_adr)}/night (${m.occupancy_rate}% occupancy)">
+            <div class="bar-stick-fill ${isPeak ? 'summer-peak' : ''}" style="height: 0%;"></div>
+          </div>
+          <span class="bar-m-name">${m.month}</span>
+          <span class="bar-m-occ">${m.occupancy_rate}%</span>
+        `;
+        barsContainer.appendChild(col);
+
+        setTimeout(() => {
+          const fill = col.querySelector(".bar-stick-fill");
+          if (fill) fill.style.height = `${heightPct}%`;
+        }, 30 + idx * 20);
+      });
+    }
 
     // Render Events Table
     const eventsBody = $("#dp-events-body");
@@ -1052,24 +1087,28 @@ $("#dp-borough").addEventListener("change", () => {
   else if (b === "Queens") $("#dp-neighbourhood").value = "Astoria";
   else if (b === "Bronx") $("#dp-neighbourhood").value = "Fordham";
   else if (b === "Staten Island") $("#dp-neighbourhood").value = "St. George";
-  setDpHint(`Borough changed to ${b}. Click "Calculate Dynamic Pricing" to update.`);
+  calculateDynamicPricing();
 });
 
 $("#dp-neighbourhood").addEventListener("change", () => {
-  setDpHint("Neighbourhood adjusted. Click 'Calculate Dynamic Pricing' to update.");
+  calculateDynamicPricing();
 });
 
 $("#dp-room-type").addEventListener("change", () => {
-  setDpHint("Room type adjusted. Click 'Calculate Dynamic Pricing' to update.");
+  calculateDynamicPricing();
 });
 
+let dpBasePriceTimer = null;
 $("#dp-base-price").addEventListener("input", () => {
-  setDpHint("Base price adjusted. Click 'Calculate Dynamic Pricing' to update.");
+  clearTimeout(dpBasePriceTimer);
+  dpBasePriceTimer = setTimeout(() => {
+    calculateDynamicPricing();
+  }, 250);
 });
 
 $$('input[name="dp-strategy"]').forEach(r => {
   r.addEventListener("change", () => {
-    setDpHint("Yield strategy adjusted. Click 'Calculate Dynamic Pricing' to update.");
+    calculateDynamicPricing();
   });
 });
 
