@@ -806,70 +806,71 @@ def simulate_what_if_scenario(
     sim_cleaning = float(simulated_config.get("cleaning_fee", 75))
     sim_instant_book = bool(simulated_config.get("instant_book", True))
     sim_superhost = bool(simulated_config.get("superhost", True))
-    sim_amenities_count = int(simulated_config.get("amenities_count", 5))
+    sim_has_wifi = bool(simulated_config.get("has_wifi", True))
+    sim_has_self_checkin = bool(simulated_config.get("has_self_checkin", True))
     
-    # 1. Base Occupancy calculation for current
-    cur_base_occ = hood_info["base_occupancy"]
-    # Adjust for current min nights friction
+    # 1. Base Occupancy calculation for current config (e.g. baseline 1-night min)
+    cur_base_occ = hood_info["base_occupancy"] * 0.90
     if cur_min_nights == 1:
-        cur_occ = min(0.92, cur_base_occ * 1.05)
+        cur_occ = min(0.90, cur_base_occ + 0.04)
         cur_avg_stay = 2.0
     elif cur_min_nights == 2:
-        cur_occ = cur_base_occ * 1.0
-        cur_avg_stay = 3.1
+        cur_occ = cur_base_occ + 0.01
+        cur_avg_stay = 3.0
     elif cur_min_nights <= 4:
-        cur_occ = cur_base_occ * 0.92
-        cur_avg_stay = 4.5
+        cur_occ = cur_base_occ - 0.03
+        cur_avg_stay = 4.4
     else:
-        cur_occ = cur_base_occ * 0.80
-        cur_avg_stay = 8.0
+        cur_occ = cur_base_occ - 0.07
+        cur_avg_stay = 7.5
         
-    cur_booked_nights = round(30.4 * cur_occ)
+    cur_booked_nights = round(30.4 * cur_occ, 1)
     cur_turnovers = max(1, round(cur_booked_nights / cur_avg_stay))
     cur_gross_room_rev = round(cur_booked_nights * cur_price, 2)
     cur_cleaning_rev = round(cur_turnovers * cur_cleaning, 2)
     cur_net_income = round((cur_gross_room_rev * 0.90) + (cur_cleaning_rev * 0.4), 2)
     
     # 2. Simulated Occupancy calculation
-    sim_occ = hood_info["base_occupancy"]
+    # Normalized base occupancy for target apartment listing
+    sim_base_occ = hood_info["base_occupancy"] * 0.78
     
-    # Price Elasticity effect (typical elasticity -1.2 for NYC short-term rentals)
-    typical_price = float(hood_info["avg_nightly"].get(sim_room, 160))
+    # Price Elasticity effect
+    typical_price = float(hood_info["avg_nightly"].get(sim_room, 180))
     price_ratio = sim_price / max(1.0, typical_price)
     if price_ratio > 1.0:
-        sim_occ *= (1.0 - (price_ratio - 1.0) * 0.45)
+        price_penalty = (price_ratio - 1.0) * 0.22
+        sim_occ = sim_base_occ - price_penalty
     else:
-        sim_occ *= (1.0 + (1.0 - price_ratio) * 0.35)
+        price_bonus = (1.0 - price_ratio) * 0.14
+        sim_occ = sim_base_occ + price_bonus
         
-    # Min nights friction
+    # Min nights stay friction & length of stay
     if sim_min_nights == 1:
-        sim_occ *= 1.06
+        sim_occ += 0.035
         sim_avg_stay = 2.1
     elif sim_min_nights == 2:
-        sim_occ *= 1.01
-        sim_avg_stay = 3.2
+        sim_occ += 0.015
+        sim_avg_stay = 3.1
     elif sim_min_nights <= 4:
-        sim_occ *= 0.93
-        sim_avg_stay = 4.6
+        sim_occ -= 0.015
+        sim_avg_stay = 4.5
     elif sim_min_nights <= 7:
-        sim_occ *= 0.82
-        sim_avg_stay = 8.2
+        sim_occ -= 0.055
+        sim_avg_stay = 7.8
     else:
-        sim_occ *= 0.72
-        sim_avg_stay = 16.0
+        sim_occ -= 0.100
+        sim_avg_stay = 15.0
         
-    # Instant Book boost (+7%)
-    if sim_instant_book:
-        sim_occ *= 1.07
-    # Superhost badge boost (+9%)
-    if sim_superhost:
-        sim_occ *= 1.09
-    # Key amenities boost
-    if sim_amenities_count >= 5:
-        sim_occ *= 1.05
-        
-    sim_occ = min(0.96, max(0.25, sim_occ))
-    sim_booked_nights = round(30.4 * sim_occ)
+    # Value-Add Feature Lifts (Directly driven by user toggles)
+    instant_bonus = 0.065 if sim_instant_book else 0.0
+    superhost_bonus = 0.085 if sim_superhost else 0.0
+    wifi_bonus = 0.045 if sim_has_wifi else 0.0
+    self_check_bonus = 0.030 if sim_has_self_checkin else 0.0
+    
+    sim_occ = sim_occ + instant_bonus + superhost_bonus + wifi_bonus + self_check_bonus
+    sim_occ = min(0.93, max(0.28, sim_occ))
+    
+    sim_booked_nights = round(30.4 * sim_occ, 1)
     sim_turnovers = max(1, round(sim_booked_nights / sim_avg_stay))
     sim_gross_room_rev = round(sim_booked_nights * sim_price, 2)
     sim_cleaning_rev = round(sim_turnovers * sim_cleaning, 2)
@@ -880,17 +881,23 @@ def simulate_what_if_scenario(
     income_pct_delta = round(((sim_net_income - cur_net_income) / max(1.0, cur_net_income)) * 100, 1)
     occ_delta_pct = round((sim_occ - cur_occ) * 100, 1)
     turnover_delta = sim_turnovers - cur_turnovers
-    hours_saved = round(-turnover_delta * 2.5, 1)  # 2.5 hours labor per turnover
+    
+    # Host workload calculation:
+    # Baseline manual turnover labor = 2.5 hrs cleaning coordination + 1.25 hrs in-person key handoff
+    # If keyless self check-in is active, save 1.25 hrs per turnover
+    checkin_hrs_saved = round(sim_turnovers * 1.25, 1) if sim_has_self_checkin else 0.0
+    turnover_labor_saved = round(-turnover_delta * 2.5, 1)
+    total_hours_saved = round(turnover_labor_saved + checkin_hrs_saved, 1)
     
     # Strategic Verdict
-    if income_delta > 0 and turnover_delta <= 0:
-        verdict = f"🚀 Win-Win Scenario: Net monthly profit increases by +${income_delta:,.0f} (+{income_pct_delta}%) while reducing turnover labor by {abs(turnover_delta)} cleanings/month!"
+    if income_delta > 0 and total_hours_saved >= 0:
+        verdict = f"🚀 Win-Win Scenario: Net monthly profit increases by +${income_delta:,.0f} (+{income_pct_delta}%) while saving {total_hours_saved} host hours/month!"
     elif income_delta > 0:
         verdict = f"📈 Highly Profitable: Net monthly income grows by +${income_delta:,.0f} (+{income_pct_delta}%). Worth the extra {turnover_delta} monthly turnover cycles."
     elif income_delta == 0:
-        verdict = "⚖️ Neutral Shift: Revenue remains equivalent. Consider optimizing price and minimum nights together."
+        verdict = "⚖️ Neutral Shift: Revenue remains equivalent. Consider optimizing price and value-add features together."
     else:
-        verdict = f"⚠️ Profit Warning: This configuration decreases monthly net revenue by -${abs(income_delta):,.0f} ({income_pct_delta}%). Adjust pricing or lower minimum night friction."
+        verdict = f"⚠️ Profit Warning: This configuration decreases monthly net revenue by -${abs(income_delta):,.0f} ({income_pct_delta}%). Enable value-add features or lower price friction."
 
     return {
         "baseline": {
@@ -921,7 +928,14 @@ def simulate_what_if_scenario(
             "annual_income_delta": round(income_delta * 12, 2),
             "occupancy_pct_delta": occ_delta_pct,
             "monthly_turnovers_delta": turnover_delta,
-            "host_hours_saved_per_month": hours_saved
+            "host_hours_saved_per_month": total_hours_saved
+        },
+        "feature_status": {
+            "instant_book": sim_instant_book,
+            "superhost": sim_superhost,
+            "has_wifi": sim_has_wifi,
+            "has_self_checkin": sim_has_self_checkin,
+            "checkin_hours_saved": checkin_hrs_saved
         },
         "verdict_recommendation": verdict
     }

@@ -1570,7 +1570,14 @@ $("#sim-hood")?.addEventListener("change", () => {
 
 $$(".sim-switch input").forEach(s => {
   s.addEventListener("change", () => {
-    setSimHint("Feature toggled. Click 'Simulate Scenario Impact' to update simulation.");
+    runWhatIfSimulation();
+    setSimHint("✓ Feature toggled & scenario recalculated!", true);
+  });
+});
+
+$$('input[name="sim-room"]').forEach(r => {
+  r.addEventListener("change", () => {
+    runWhatIfSimulation();
   });
 });
 
@@ -1605,6 +1612,8 @@ async function runWhatIfSimulation() {
     cleaning_fee: simCleaning,
     instant_book: simInstant,
     superhost: simSuperhost,
+    has_wifi: simWifi,
+    has_self_checkin: simSelfCheck,
     amenities_count: amenitiesCount
   };
 
@@ -1646,6 +1655,39 @@ async function runWhatIfSimulation() {
     $("#sim-delta-hours").textContent = hrsSaved >= 0 ? `${hrsSaved} hrs saved` : `${Math.abs(hrsSaved)} extra hrs labor`;
     const cleanDelta = data.impact_deltas.monthly_turnovers_delta;
     $("#sim-delta-cleanings").textContent = `${cleanDelta <= 0 ? Math.abs(cleanDelta) + ' fewer' : '+' + cleanDelta + ' additional'} cleanings/month`;
+
+    // Render Feature Status Chips
+    const chipsContainer = $("#sim-features-chips");
+    if (chipsContainer) {
+      chipsContainer.replaceChildren();
+      const features = [
+        { name: "Instant Bookable", icon: "⚡", on: simInstant, lift: "+6.5% bookings" },
+        { name: "Superhost Status", icon: "🏅", on: simSuperhost, lift: "+8.5% bookings" },
+        { name: "300 Mbps Wi-Fi", icon: "📶", on: simWifi, lift: "+4.5% remote stays" },
+        { name: "Keyless Self Check-in", icon: "🔑", on: simSelfCheck, lift: `${data.feature_status?.checkin_hours_saved || 7.5}h saved` }
+      ];
+
+      let activeCount = 0;
+      features.forEach(f => {
+        if (f.on) activeCount++;
+        const chip = document.createElement("div");
+        chip.style.cssText = `
+          display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.65rem;
+          border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+          background: ${f.on ? "rgba(52, 209, 127, 0.15)" : "rgba(255, 255, 255, 0.05)"};
+          color: ${f.on ? "var(--private)" : "var(--muted)"};
+          border: 1px solid ${f.on ? "rgba(52, 209, 127, 0.35)" : "rgba(255, 255, 255, 0.1)"};
+        `;
+        chip.innerHTML = `<span>${f.icon}</span> <span>${f.name}</span> <span style="font-size: 0.72rem; opacity: 0.85;">(${f.on ? f.lift : 'Inactive'})</span>`;
+        chipsContainer.appendChild(chip);
+      });
+
+      const summaryText = $("#sim-features-summary");
+      if (summaryText) {
+        summaryText.textContent = `${activeCount} of 4 Features Active`;
+        summaryText.style.color = activeCount >= 3 ? "var(--private)" : activeCount >= 1 ? "var(--signal)" : "var(--danger)";
+      }
+    }
 
   } catch (err) {
     console.error("What-If Simulation Error:", err);
