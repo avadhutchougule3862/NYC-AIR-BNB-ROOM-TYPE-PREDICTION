@@ -1185,7 +1185,7 @@ function updateRoiLoanDisplay() {
 
   const downBadge = $("#roi-down-amount-badge");
   if (downBadge) {
-    downBadge.textContent = `Down Payment: $${downAmount.toLocaleString()} (${downPct}%)`;
+    downBadge.textContent = `Cash Down Payment: $${downAmount.toLocaleString()} (${downPct}% equity)`;
   }
   const loanDisplay = $("#roi-loan-display");
   if (loanDisplay) {
@@ -1193,7 +1193,7 @@ function updateRoiLoanDisplay() {
   }
   const loanPctBadge = $("#roi-loan-pct-badge");
   if (loanPctBadge) {
-    loanPctBadge.textContent = `${loanPct}% Loan (${term} Years Term)`;
+    loanPctBadge.textContent = `Bank Mortgage: $${loanAmount.toLocaleString()} (${loanPct}% loan over ${term} yrs)`;
   }
 }
 

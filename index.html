@@ -4,12 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>AeroPulse NYC - SaaS Host & Investor Intelligence Suite</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=2.3">
+  <link rel="stylesheet" href="style.css?v=2.5">
 </head>
 <body>
 
@@ -561,7 +564,7 @@
               <label class="label" for="roi-down">Down Payment (%)</label>
               <input type="number" id="roi-down" class="saas-input" value="25" min="10" max="100" step="5">
               <div class="field-subval" id="roi-down-amount-badge" style="font-size: 0.83rem; color: var(--private); margin-top: 5px; font-weight: 600;">
-                Down Payment: $157,500 (25%)
+                Cash Down Payment: $157,500 (25% equity)
               </div>
             </div>
             <div class="field">
@@ -570,7 +573,7 @@
                 <input type="text" id="roi-loan-display" class="saas-input" value="472,500" readonly style="background: rgba(255,255,255,0.06); cursor: default; color: var(--signal); font-weight: 600;">
               </div>
               <div class="field-subval" id="roi-loan-pct-badge" style="font-size: 0.83rem; color: var(--muted); margin-top: 5px;">
-                75% Loan (30 Years Term)
+                Bank Mortgage: $472,500 (75% loan over 30 yrs)
               </div>
             </div>
           </div>
@@ -579,14 +582,14 @@
             <div class="field">
               <label class="label" for="roi-rate">Bank Loan Interest Rate (%)</label>
               <input type="number" id="roi-rate" class="saas-input" value="6.75" min="2" max="15" step="0.25">
-              <p class="hint">Standard 30-year fixed loan benchmark</p>
+              <p class="hint">Annual fixed mortgage interest benchmark</p>
             </div>
             <div class="field">
               <label class="label" for="roi-term">Loan Duration</label>
               <select id="roi-term" class="saas-select">
-                <option value="30" selected>30 Years (Standard)</option>
-                <option value="20">20 Years</option>
-                <option value="15">15 Years (Fast Payoff)</option>
+                <option value="30" selected>30 Years (Standard Term)</option>
+                <option value="20">20 Years (Medium Term)</option>
+                <option value="15">15 Years (Fast Payoff Term)</option>
               </select>
             </div>
           </div>
@@ -602,17 +605,17 @@
             <div class="kpi-card highlight-green">
               <span class="kpi-label">Property Cap Rate</span>
               <div class="kpi-val" id="roi-kpi-cap">7.9%</div>
-              <span class="kpi-sub" id="roi-kpi-grade">A (Strong Return)</span>
+              <span class="kpi-sub" id="roi-kpi-grade">A (Strong Return) · Net Income / Price</span>
             </div>
             <div class="kpi-card highlight-blue">
               <span class="kpi-label">Cash-on-Cash Return</span>
               <div class="kpi-val" id="roi-kpi-coc">7.6%</div>
-              <span class="kpi-sub">On total cash invested</span>
+              <span class="kpi-sub">Annual Cash Flow / Total Cash Invested</span>
             </div>
             <div class="kpi-card">
               <span class="kpi-label">Monthly Net Profit</span>
               <div class="kpi-val" id="roi-kpi-cashflow">+$1,095 / mo</div>
-              <span class="kpi-sub">After all operating expenses & debt service</span>
+              <span class="kpi-sub">Net profit in pocket after loan EMI & expenses</span>
             </div>
             <div class="kpi-card">
               <span class="kpi-label">Payback Period</span>
@@ -623,7 +626,48 @@
 
           <div class="panel-box expense-breakdown">
             <h3>Annual Income & Expense Waterfall</h3>
-            <div class="waterfall-list" id="roi-waterfall"></div>
+            <div class="waterfall-list" id="roi-waterfall">
+              <div class="waterfall-row">
+                <span>Gross Annual Airbnb Revenue</span>
+                <span style="color: var(--private); font-weight: 700;">+$83,420</span>
+              </div>
+              <div class="waterfall-row">
+                <span>Property Taxes (NYC ~0.85%)</span>
+                <span style="color: var(--danger); font-weight: 700;">-$5,355</span>
+              </div>
+              <div class="waterfall-row">
+                <span>Building Insurance & Common Charges</span>
+                <span style="color: var(--danger); font-weight: 700;">-$4,920</span>
+              </div>
+              <div class="waterfall-row">
+                <span>Turnover Linens & Supplies</span>
+                <span style="color: var(--danger); font-weight: 700;">-$1,725</span>
+              </div>
+              <div class="waterfall-row">
+                <span>Airbnb Host Platform Fee (3%)</span>
+                <span style="color: var(--danger); font-weight: 700;">-$2,503</span>
+              </div>
+              <div class="waterfall-row">
+                <span>High-Speed Wi-Fi & Utilities</span>
+                <span style="color: var(--danger); font-weight: 700;">-$4,171</span>
+              </div>
+              <div class="waterfall-row">
+                <span style="font-weight: 700;">Total Annual Operating Expenses</span>
+                <span style="color: var(--danger); font-weight: 700;">-$18,674</span>
+              </div>
+              <div class="waterfall-row total-row">
+                <span style="font-weight: 700;">Net Operating Income (NOI)</span>
+                <span style="color: var(--signal); font-weight: 700;">$64,746</span>
+              </div>
+              <div class="waterfall-row">
+                <span>Annual Bank Loan Payment (Principal & Interest)</span>
+                <span style="color: var(--muted); font-weight: 700;">-$36,804</span>
+              </div>
+              <div class="waterfall-row total-row">
+                <span style="font-weight: 700;">Net Pre-Tax Investor Annual Profit</span>
+                <span style="color: var(--private); font-weight: 700;">+$27,942</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -918,6 +962,6 @@
     </form>
   </dialog>
 
-  <script src="script.js?v=2.3"></script>
+  <script src="script.js?v=2.5"></script>
 </body>
 </html>
