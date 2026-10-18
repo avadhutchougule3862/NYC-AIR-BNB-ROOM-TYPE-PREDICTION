@@ -91,6 +91,13 @@ class WhatIfRequest(BaseModel):
 # API Routes
 # ----------------------------------------------------
 
+NO_CACHE_HEADERS = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
+}
+
+
 @app.get('/')
 def greet(request: Request):
     """
@@ -98,7 +105,7 @@ def greet(request: Request):
     """
     accept = request.headers.get("accept", "")
     if "text/html" in accept and os.path.exists("index.html"):
-        return FileResponse("index.html")
+        return FileResponse("index.html", headers=NO_CACHE_HEADERS)
     return {
         "message": "NYC Airbnb SaaS Intelligence Suite API is running successfully!",
         "status": "online",
@@ -117,15 +124,16 @@ def greet(request: Request):
 @app.get('/style.css')
 def get_style():
     if os.path.exists("style.css"):
-        return FileResponse("style.css", media_type="text/css")
+        return FileResponse("style.css", media_type="text/css", headers=NO_CACHE_HEADERS)
     return JSONResponse(status_code=404, content={"error": "style.css not found"})
 
 
 @app.get('/script.js')
 def get_script():
     if os.path.exists("script.js"):
-        return FileResponse("script.js", media_type="application/javascript")
+        return FileResponse("script.js", media_type="application/javascript", headers=NO_CACHE_HEADERS)
     return JSONResponse(status_code=404, content={"error": "script.js not found"})
+
 
 
 @app.post('/predict')

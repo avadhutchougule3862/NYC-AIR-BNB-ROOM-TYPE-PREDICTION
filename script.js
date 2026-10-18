@@ -88,7 +88,8 @@ function fmtPct(v) {
    API address + connection status
    ========================================================== */
 
-let apiBase = (store.get(STORE_API) || DEFAULT_API).replace(/\/+$/, "");
+const isRemote = typeof window !== "undefined" && window.location.hostname !== "127.0.0.1" && window.location.hostname !== "localhost";
+let apiBase = (isRemote ? window.location.origin : (store.get(STORE_API) || DEFAULT_API)).replace(/\/+$/, "");
 const pill = $("#api-pill");
 const pillText = $("#api-pill-text");
 
@@ -96,13 +97,13 @@ function setApiStatus(status) {
   pill.dataset.status = status;
   pillText.textContent =
     status === "ok" ? "API connected" :
-    status === "off" ? "API unreachable" : "Checking API…";
+    status === "off" ? "API waking up…" : "Checking API…";
 }
 
 async function checkApi() {
   setApiStatus("checking");
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 4000);
+  const timer = setTimeout(() => ctrl.abort(), 12000);
   try {
     const res = await fetch(apiBase + "/", { signal: ctrl.signal });
     setApiStatus(res.ok ? "ok" : "off");
@@ -112,6 +113,7 @@ async function checkApi() {
     clearTimeout(timer);
   }
 }
+
 
 const dialog = $("#api-dialog");
 const apiUrlInput = $("#api-url");
@@ -698,7 +700,7 @@ form.addEventListener("submit", async (e) => {
   $("#latency").hidden = true;
 
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 20000);
+  const timer = setTimeout(() => ctrl.abort(), 40000);
   const t0 = performance.now();
 
   try {
@@ -724,7 +726,7 @@ form.addEventListener("submit", async (e) => {
       } else {
         showApiError(
           `The server returned an error (${res.status})`,
-          "The model could not score this listing. Check the terminal running uvicorn for the full traceback."
+          "The model could not score this listing. Check the server logs for the full traceback."
         );
       }
       return;
@@ -735,7 +737,7 @@ form.addEventListener("submit", async (e) => {
     if (!norm || norm.probs.some(p => !Number.isFinite(p))) {
       showApiError(
         "The response was not what this page expects",
-        'Expected JSON with "predicted_room_type" and a "probabilities" object (or "Predicted_room_type" and a "Probability" list). Check what your /predict route returns.'
+        'Expected JSON with "predicted_room_type" and a "probabilities" object.'
       );
       return;
     }
@@ -743,12 +745,12 @@ form.addEventListener("submit", async (e) => {
 
   } catch (err) {
     if (err.name === "AbortError") {
-      showApiError("The API took too long to answer", "No response after 20 seconds. The model may still be loading. Try again in a moment.");
+      showApiError("The server took a while to answer", "Render Free Tier spins down on inactivity and can take ~45s to wake up. Please click 'Predict room type' again now!");
     } else {
       setApiStatus("off");
       showApiError(
         "Can't reach the API",
-        `Nothing answered at ${apiBase}. Start the server with "uvicorn main:app --reload", or change the address with the status button at the top.`
+        `Connecting to ${apiBase}. If this is on Render, the server may still be waking up from sleep. Please wait a moment and try again.`
       );
     }
   } finally {
