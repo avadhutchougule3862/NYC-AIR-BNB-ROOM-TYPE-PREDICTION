@@ -1,0 +1,60 @@
+{
+  "project_name": "NYC Airbnb Room Type Prediction & SaaS Intelligence",
+  "version": "2.3.0",
+  "models": {
+    "classical_ml": {
+      "filename": "Model_Pipeline.pkl",
+      "algorithm": "RandomForestClassifier with Balanced Class Weights",
+      "framework": "scikit-learn 1.6+",
+      "features": {
+        "numerical": [
+          "latitude",
+          "longitude",
+          "price",
+          "minimum_nights",
+          "number_of_reviews",
+          "reviews_per_month",
+          "calculated_host_listings_count",
+          "availability_365"
+        ],
+        "categorical": [
+          "neighbourhood_group",
+          "neighbourhood"
+        ]
+      },
+      "target_classes": [
+        "Entire home/apt",
+        "Private room",
+        "Shared room"
+      ]
+    },
+    "deep_learning_ann": {
+      "filename": "ann_model.keras",
+      "architecture": "Multi-Layer Perceptron (MLP)",
+      "framework": "Keras 3.x / TensorFlow",
+      "layers": [
+        {"name": "Input Layer", "units": 234, "activation": "BatchNormalization"},
+        {"name": "Dense 1", "units": 128, "activation": "relu", "dropout": 0.3},
+        {"name": "Dense 2", "units": 64, "activation": "relu", "dropout": 0.2},
+        {"name": "Dense 3", "units": 32, "activation": "leaky_relu"},
+        {"name": "Output Layer", "units": 3, "activation": "softmax"}
+      ],
+      "loss": "categorical_crossentropy",
+      "optimizer": "adam"
+    },
+    "computer_vision_cnn": {
+      "filename": "cnn_room_vision.keras",
+      "architecture": "MobileNetV2 Transfer Learning Backbone",
+      "framework": "Keras / TensorFlow Vision",
+      "input_shape": [224, 224, 3],
+      "scene_categories": [
+        "bedroom",
+        "living_room",
+        "bathroom",
+        "kitchen",
+        "exterior"
+      ]
+    }
+  },
+  "created_at": "2026-10-18T17:35:00Z"
+}
