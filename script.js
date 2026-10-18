@@ -1170,12 +1170,41 @@ $$("#roi-borough-filter button").forEach(btn => {
   });
 });
 
+function updateRoiLoanDisplay() {
+  const priceInput = $("#roi-price");
+  const downInput = $("#roi-down");
+  const termSelect = $("#roi-term");
+  if (!priceInput || !downInput) return;
+
+  const price = parseFloat(priceInput.value) || 630000;
+  const downPct = parseFloat(downInput.value) || 25;
+  const downAmount = Math.round(price * (downPct / 100));
+  const loanAmount = Math.max(0, Math.round(price - downAmount));
+  const loanPct = Math.max(0, Math.round(100 - downPct));
+  const term = termSelect ? termSelect.value : "30";
+
+  const downBadge = $("#roi-down-amount-badge");
+  if (downBadge) {
+    downBadge.textContent = `Down Payment: $${downAmount.toLocaleString()} (${downPct}%)`;
+  }
+  const loanDisplay = $("#roi-loan-display");
+  if (loanDisplay) {
+    loanDisplay.value = loanAmount.toLocaleString();
+  }
+  const loanPctBadge = $("#roi-loan-pct-badge");
+  if (loanPctBadge) {
+    loanPctBadge.textContent = `${loanPct}% Loan (${term} Years Term)`;
+  }
+}
+
 async function calculateCustomRoi() {
+  updateRoiLoanDisplay();
   const borough = $("#roi-borough").value;
   const neighbourhood = $("#roi-neighbourhood").value;
   const custom_property_price = parseFloat($("#roi-price").value) || 600000;
   const down_payment_pct = parseFloat($("#roi-down").value) || 25;
   const mortgage_interest_pct = parseFloat($("#roi-rate").value) || 6.75;
+  const loan_term_years = parseInt($("#roi-term")?.value || "30", 10);
 
   try {
     const res = await fetch(apiBase + "/api/roi-predictor", {
@@ -1186,7 +1215,8 @@ async function calculateCustomRoi() {
         neighbourhood: neighbourhood,
         custom_property_price: custom_property_price,
         down_payment_pct: down_payment_pct,
-        mortgage_interest_pct: mortgage_interest_pct
+        mortgage_interest_pct: mortgage_interest_pct,
+        loan_term_years: loan_term_years
       })
     });
     if (!res.ok) return;
@@ -1199,21 +1229,21 @@ async function calculateCustomRoi() {
     $("#roi-kpi-payback").textContent = `${data.payback_years} yrs`;
     $("#roi-kpi-breakeven").textContent = `Breakeven: ${data.breakeven_nights} nights/yr (${data.breakeven_occupancy_pct}%)`;
 
-    // Render Waterfall
+    // Render Waterfall with clean English + Marathi labels
     const waterfall = $("#roi-waterfall");
     waterfall.replaceChildren();
 
     const items = [
-      { label: "Gross Annual Airbnb Revenue (Booked nights × ADR)", val: `+$${Math.round(data.gross_annual_revenue).toLocaleString()}`, color: "var(--private)" },
-      { label: "Property Taxes (NYC ~1.1%)", val: `-$${Math.round(data.annual_expenses.property_tax).toLocaleString()}`, color: "var(--danger)" },
-      { label: "Insurance & Common HOA/Charges", val: `-$${Math.round(data.annual_expenses.insurance_hoa).toLocaleString()}`, color: "var(--danger)" },
-      { label: "Cleaning & Turnover Expenses", val: `-$${Math.round(data.annual_expenses.cleaning_turnover).toLocaleString()}`, color: "var(--danger)" },
-      { label: "Airbnb Host Platform Fee (3%)", val: `-$${Math.round(data.annual_expenses.airbnb_service_fee).toLocaleString()}`, color: "var(--danger)" },
-      { label: "Maintenance & Utilities (ConEd, Wi-Fi)", val: `-$${Math.round(data.annual_expenses.maintenance_utilities).toLocaleString()}`, color: "var(--danger)" },
-      { label: "Total Annual Operating Expenses", val: `-$${Math.round(data.annual_expenses.total_expenses).toLocaleString()}`, color: "var(--danger)", bold: true },
-      { label: "Net Operating Income (NOI)", val: `$${Math.round(data.net_operating_income).toLocaleString()}`, color: "var(--signal)", bold: true, isTotal: true },
-      { label: "Annual Debt Service (Principal & Interest)", val: `-$${Math.round(data.monthly_mortgage * 12).toLocaleString()}`, color: "var(--muted)" },
-      { label: "Net Pre-Tax Investor Annual Cash Flow", val: `${data.annual_cash_flow >= 0 ? '+' : ''}$${Math.round(data.annual_cash_flow).toLocaleString()}`, color: "var(--private)", bold: true, isTotal: true }
+      { label: "Gross Annual Airbnb Revenue (वार्षिक एकूण उत्पन्न)", val: `+$${Math.round(data.gross_annual_revenue).toLocaleString()}`, color: "var(--private)" },
+      { label: "Property Taxes (NYC ~0.85% मालमत्ता कर)", val: `-$${Math.round(data.annual_expenses.property_tax).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Building Insurance & Common Charges (इन्शुरन्स व मेन्टेनन्स)", val: `-$${Math.round(data.annual_expenses.insurance_hoa).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Turnover Linens & Supplies (स्वच्छता साहित्य व देखभाल)", val: `-$${Math.round(data.annual_expenses.cleaning_turnover).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Airbnb Host Platform Fee (3% प्लॅटफॉर्म फी)", val: `-$${Math.round(data.annual_expenses.airbnb_service_fee).toLocaleString()}`, color: "var(--danger)" },
+      { label: "High-Speed Wi-Fi & Utilities (लाईट बिल व वाय-फाय)", val: `-$${Math.round(data.annual_expenses.maintenance_utilities).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Total Annual Operating Expenses (एकूण वार्षिक ऑपरेटिंग खर्च)", val: `-$${Math.round(data.annual_expenses.total_expenses).toLocaleString()}`, color: "var(--danger)", bold: true },
+      { label: "Net Operating Income (NOI / निव्वळ ऑपरेटिंग उत्पन्न)", val: `$${Math.round(data.net_operating_income).toLocaleString()}`, color: "var(--signal)", bold: true, isTotal: true },
+      { label: "Annual Bank Loan Payment (Principal & Interest / वार्षिक कर्ज हप्ता)", val: `-$${Math.round(data.monthly_mortgage * 12).toLocaleString()}`, color: "var(--muted)" },
+      { label: "Net Pre-Tax Investor Annual Profit (वार्षिक निव्वळ नफा खिशात)", val: `${data.annual_cash_flow >= 0 ? '+' : ''}$${Math.round(data.annual_cash_flow).toLocaleString()}`, color: "var(--private)", bold: true, isTotal: true }
     ];
 
     items.forEach(it => {
@@ -1253,9 +1283,10 @@ function populateRoiHoods(borough) {
   });
 }
 
-// Initial populate of neighbourhood datalist
+// Initial populate of neighbourhood datalist & loan display
 if ($("#roi-borough")) {
   populateRoiHoods($("#roi-borough").value);
+  updateRoiLoanDisplay();
 }
 
 function setRoiHint(text, isReady = false) {
@@ -1296,8 +1327,8 @@ $("#roi-borough").addEventListener("change", () => {
   else if (b === "Bronx") { $("#roi-neighbourhood").value = "Fordham"; $("#roi-price").value = 310000; }
   else if (b === "Staten Island") { $("#roi-neighbourhood").value = "St. George"; $("#roi-price").value = 420000; }
   
+  updateRoiLoanDisplay();
   setRoiHint(`Borough changed to ${b}. Click "Calculate Investment Returns" to update analysis.`);
-  // Note: calculateCustomRoi() is DELIBERATELY NOT called here so user has full control!
 });
 
 $("#roi-neighbourhood").addEventListener("change", () => {
@@ -1305,13 +1336,17 @@ $("#roi-neighbourhood").addEventListener("change", () => {
   if (ROI_BENCHMARK_PRICES[hood]) {
     $("#roi-price").value = ROI_BENCHMARK_PRICES[hood];
   }
+  updateRoiLoanDisplay();
   setRoiHint(`Neighbourhood selected. Click "Calculate Investment Returns" to analyze.`);
-  // No automatic calculation!
 });
 
-["#roi-price", "#roi-down", "#roi-rate"].forEach(sel => {
+["#roi-price", "#roi-down", "#roi-rate", "#roi-term"].forEach(sel => {
   $(sel)?.addEventListener("input", () => {
+    updateRoiLoanDisplay();
     setRoiHint(`Parameters adjusted. Click "Calculate Investment Returns" to update.`);
+  });
+  $(sel)?.addEventListener("change", () => {
+    updateRoiLoanDisplay();
   });
 });
 

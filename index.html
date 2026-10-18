@@ -549,20 +549,45 @@
           </div>
 
           <div class="field">
-            <label class="label" for="roi-price">Property Purchase Price ($)</label>
+            <label class="label" for="roi-price">Property Purchase Price ($) / मालमत्ता खरेदी किंमत</label>
             <div class="prefixed"><span aria-hidden="true">$</span>
               <input type="number" id="roi-price" class="saas-input" value="630000" step="10000">
             </div>
           </div>
 
+          <!-- Dual Column: Down Payment & Remaining Bank Loan -->
           <div class="pair-fields">
             <div class="field">
-              <label class="label" for="roi-down">Down Payment (%)</label>
+              <label class="label" for="roi-down">Down Payment (%) / डाऊन पेमेंट</label>
               <input type="number" id="roi-down" class="saas-input" value="25" min="10" max="100" step="5">
+              <div class="field-subval" id="roi-down-amount-badge" style="font-size: 0.83rem; color: var(--private); margin-top: 5px; font-weight: 600;">
+                Down Payment: $157,500 (25%)
+              </div>
             </div>
             <div class="field">
-              <label class="label" for="roi-rate">Mortgage Rate (%)</label>
+              <label class="label" for="roi-loan-display">Remaining Bank Loan ($) / उर्वरित बँक कर्ज</label>
+              <div class="prefixed"><span aria-hidden="true">$</span>
+                <input type="text" id="roi-loan-display" class="saas-input" value="472,500" readonly style="background: rgba(255,255,255,0.06); cursor: default; color: var(--signal); font-weight: 600;">
+              </div>
+              <div class="field-subval" id="roi-loan-pct-badge" style="font-size: 0.83rem; color: var(--muted); margin-top: 5px;">
+                75% Loan (30 Years Term)
+              </div>
+            </div>
+          </div>
+
+          <div class="pair-fields">
+            <div class="field">
+              <label class="label" for="roi-rate">Bank Loan Interest Rate (%) / कर्ज व्याजदर</label>
               <input type="number" id="roi-rate" class="saas-input" value="6.75" min="2" max="15" step="0.25">
+              <p class="hint">Standard 30-year fixed loan benchmark</p>
+            </div>
+            <div class="field">
+              <label class="label" for="roi-term">Loan Duration / कर्ज कालावधी</label>
+              <select id="roi-term" class="saas-select">
+                <option value="30" selected>30 Years (Standard)</option>
+                <option value="20">20 Years</option>
+                <option value="15">15 Years (Fast Payoff)</option>
+              </select>
             </div>
           </div>
 
@@ -575,29 +600,29 @@
         <div class="roi-results-display">
           <div class="kpi-grid">
             <div class="kpi-card highlight-green">
-              <span class="kpi-label">Unlevered Cap Rate</span>
-              <div class="kpi-val" id="roi-kpi-cap">8.4%</div>
-              <span class="kpi-sub" id="roi-kpi-grade">A+ (Elite Cashflow)</span>
+              <span class="kpi-label">Property Cap Rate / निव्वळ परतावा</span>
+              <div class="kpi-val" id="roi-kpi-cap">7.9%</div>
+              <span class="kpi-sub" id="roi-kpi-grade">A (Strong Return)</span>
             </div>
             <div class="kpi-card highlight-blue">
-              <span class="kpi-label">Cash-on-Cash Return</span>
-              <div class="kpi-val" id="roi-kpi-coc">9.8%</div>
+              <span class="kpi-label">Cash-on-Cash Return / रोख परतावा</span>
+              <div class="kpi-val" id="roi-kpi-coc">7.6%</div>
               <span class="kpi-sub">On total cash invested</span>
             </div>
             <div class="kpi-card">
-              <span class="kpi-label">Monthly Net Cash Flow</span>
-              <div class="kpi-val" id="roi-kpi-cashflow">+$1,450</div>
-              <span class="kpi-sub">After mortgage & all fees</span>
+              <span class="kpi-label">Monthly Net Profit / दरमहा नफा</span>
+              <div class="kpi-val" id="roi-kpi-cashflow">+$1,095 / mo</div>
+              <span class="kpi-sub">सर्व खर्च व बँक हप्ता वजा जाता</span>
             </div>
             <div class="kpi-card">
-              <span class="kpi-label">Payback Period</span>
-              <div class="kpi-val" id="roi-kpi-payback">10.2 yrs</div>
-              <span class="kpi-sub" id="roi-kpi-breakeven">Breakeven: 142 days/yr</span>
+              <span class="kpi-label">Payback Period / मुद्दल वसुली</span>
+              <div class="kpi-val" id="roi-kpi-payback">13.2 yrs</div>
+              <span class="kpi-sub" id="roi-kpi-breakeven">Breakeven: 220 nights/yr (60.3%)</span>
             </div>
           </div>
 
           <div class="panel-box expense-breakdown">
-            <h3>Annual Income & Expense Waterfall</h3>
+            <h3>Annual Income & Expense Waterfall / वार्षिक ताळेबंद</h3>
             <div class="waterfall-list" id="roi-waterfall"></div>
           </div>
         </div>
