@@ -744,3 +744,990 @@ dialog .label { margin-top: 1.1rem; }
   .route { stroke-dashoffset: 0; }
   .stops circle { opacity: .35; }
 }
+
+
+/* ==========================================================
+   AEROPULSE NYC - SAAS MODULES & COMPONENT STYLING
+   ========================================================== */
+
+/* Brand & Header enhancements */
+.brand-tag {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--signal);
+  font-weight: 600;
+}
+
+.hero-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--signal);
+  background: rgba(255, 210, 63, 0.12);
+  border: 1px solid rgba(255, 210, 63, 0.3);
+  border-radius: 999px;
+  margin-bottom: 0.85rem;
+}
+
+/* ---------- SaaS Tab Navigation Bar ---------- */
+.saas-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(14, 19, 32, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+  margin-top: 1rem;
+}
+
+.nav-scroller {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0.5rem 1.25rem;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-scroller::-webkit-scrollbar { display: none; }
+
+.saas-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 1rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+.saas-tab:hover {
+  color: var(--text);
+  background: var(--panel);
+  border-color: var(--line-soft);
+}
+.saas-tab.active {
+  color: var(--signal);
+  background: var(--panel-2);
+  border-color: rgba(255, 210, 63, 0.35);
+  box-shadow: 0 0 12px rgba(255, 210, 63, 0.15);
+  font-weight: 600;
+}
+.tab-icon { font-size: 1rem; }
+
+/* Tab Panes */
+.tab-pane {
+  display: none;
+  animation: fadeInPane 0.3s var(--ease-out) forwards;
+}
+.tab-pane.active { display: block; }
+
+@keyframes fadeInPane {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Transit & Safety Profile Card in Classifier ---------- */
+.transit-safety-card {
+  margin-top: 1.25rem;
+  padding: 1rem 1.15rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+.ts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.ts-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--signal);
+  text-transform: uppercase;
+}
+.ts-tag {
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+.ts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.ts-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+.ts-kpi-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  padding-top: 2px;
+}
+.ts-val {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.ts-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.ts-note {
+  font-size: 0.75rem;
+  color: var(--private);
+  margin-top: 2px;
+}
+.ts-lines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+.mta-pill {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: #0039A6;
+}
+.mta-pill.mta-red { background: #EE352E; }
+.mta-pill.mta-green { background: #00933C; }
+.mta-pill.mta-orange { background: #FF6319; }
+.mta-pill.mta-yellow { background: #FCCC0A; color: #000; }
+.mta-pill.mta-gray { background: #808183; }
+.mta-pill.mta-purple { background: #B933AD; }
+
+.badge-grade {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(52, 209, 127, 0.2);
+  color: var(--private);
+  border: 1px solid rgba(52, 209, 127, 0.35);
+}
+
+/* ---------- Common SaaS Panels & Controls ---------- */
+.panel-box {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 1.35rem;
+}
+.panel-box h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin-bottom: 0.35rem;
+}
+.panel-box h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.65rem;
+}
+.m-bottom { margin-bottom: 1.75rem; }
+
+.saas-select, .saas-input, .saas-textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.925rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.saas-select:focus, .saas-input:focus, .saas-textarea:focus {
+  border-color: var(--signal);
+  box-shadow: 0 0 0 2px rgba(255, 210, 63, 0.25);
+  outline: none;
+}
+.saas-textarea { resize: vertical; min-height: 120px; }
+.full-width { width: 100%; justify-content: center; margin-top: 1rem; }
+
+/* Pair inputs */
+.pair-fields, .pair-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* KPI Grids & Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.kpi-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s var(--ease-out), border-color 0.2s;
+}
+.kpi-card:hover { transform: translateY(-2px); border-color: var(--line-soft); }
+.kpi-label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+.kpi-val {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0.35rem 0 0.2rem;
+  color: var(--text);
+}
+.kpi-sub { font-size: 0.78rem; color: var(--muted); }
+.kpi-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(52, 209, 127, 0.15);
+  color: var(--private);
+  border: 1px solid rgba(52, 209, 127, 0.3);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.highlight-green .kpi-val { color: var(--private); }
+.highlight-orange .kpi-val { color: var(--home); }
+.highlight-blue .kpi-val { color: var(--shared); }
+
+/* ---------- Tab 2: Dynamic Pricing Layout ---------- */
+.pricing-layout {
+  display: grid;
+  grid-template-columns: minmax(310px, 360px) minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+.strategy-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+.strategy-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.strategy-card:hover { border-color: var(--faint); }
+.strategy-card input:checked + .strategy-content .strategy-name { color: var(--signal); }
+.strategy-card input { margin-top: 3px; }
+.strategy-content { display: flex; flex-direction: column; }
+.strategy-name { font-weight: 600; font-size: 0.875rem; }
+.strategy-desc { font-size: 0.75rem; color: var(--muted); }
+
+/* 12-Month Seasonality Chart */
+.chart-card { margin-bottom: 1.25rem; }
+.chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.seasonal-bars {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 8px;
+  align-items: flex-end;
+  height: 190px;
+  padding: 10px 0 0;
+  border-bottom: 1px solid var(--line);
+}
+.bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  position: relative;
+}
+.bar-stick {
+  width: 100%;
+  max-width: 32px;
+  background: var(--panel-2);
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s;
+}
+.bar-stick:hover {
+  filter: brightness(1.2);
+}
+.bar-stick-fill {
+  width: 100%;
+  background: linear-gradient(to top, var(--shared), var(--signal));
+  border-radius: 4px 4px 0 0;
+  transition: height 0.6s var(--ease-out);
+}
+.bar-stick-fill.summer-peak {
+  background: linear-gradient(to top, var(--home), var(--signal));
+}
+.bar-m-name {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 8px;
+  font-weight: 600;
+}
+.bar-m-val {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.bar-m-occ {
+  font-size: 0.65rem;
+  color: var(--private);
+}
+
+/* Events Table & SaaS Table */
+.events-table-wrap, .table-wrap {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+.saas-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+}
+.saas-table th {
+  padding: 0.75rem 0.85rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--line);
+  background: rgba(14, 19, 32, 0.4);
+}
+.saas-table td {
+  padding: 0.85rem;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--text);
+}
+.saas-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+.advice-box { margin-top: 1.25rem; }
+.bullet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+.bullet-list li {
+  position: relative;
+  padding-left: 1.25rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.bullet-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--signal);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* ---------- Tab 3: Real Estate ROI Layout ---------- */
+.table-head-flex {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.filter-chips {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.chip-sm {
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.chip-sm:hover, .chip-sm.active {
+  color: var(--signal);
+  border-color: rgba(255, 210, 63, 0.4);
+  background: rgba(255, 210, 63, 0.1);
+}
+
+.roi-calc-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+.waterfall-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+.waterfall-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.75rem;
+  background: var(--bg-2);
+  border-radius: var(--r-sm);
+  font-size: 0.875rem;
+}
+.waterfall-row.total-row {
+  background: rgba(52, 209, 127, 0.1);
+  border: 1px solid rgba(52, 209, 127, 0.3);
+  font-weight: 700;
+  color: var(--private);
+}
+
+/* ---------- Tab 4: NLP Sentiment Layout ---------- */
+.sentiment-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+.sample-reviews-row {
+  margin-bottom: 1rem;
+}
+.preset-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+.preset-pill {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-radius: var(--r-sm);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.preset-pill:hover, .preset-pill.active {
+  border-color: var(--signal);
+  color: var(--text);
+  background: rgba(255, 210, 63, 0.08);
+}
+.overall-sentiment-box { margin-bottom: 1.25rem; }
+.sentiment-meter-flex {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.sentiment-score-ring {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 4px solid var(--private);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(52, 209, 127, 0.25);
+}
+.score-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.85rem;
+  line-height: 1;
+  color: var(--private);
+}
+.score-sub { font-size: 0.65rem; color: var(--muted); }
+.sentiment-tier {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.45rem;
+}
+.sentiment-stars {
+  font-size: 0.95rem;
+  color: var(--signal);
+  margin-top: 0.2rem;
+}
+
+/* Aspect Progress Bars */
+.aspect-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.85rem;
+}
+.aspect-card {
+  background: var(--bg-2);
+  padding: 0.75rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-soft);
+}
+.aspect-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  margin-bottom: 0.4rem;
+}
+.aspect-score-bar {
+  height: 7px;
+  background: var(--panel-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.aspect-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--private);
+  transition: width 0.6s var(--ease-out);
+}
+.aspect-fill.amber { background: var(--signal); }
+.aspect-fill.red { background: var(--danger); }
+
+/* Sentiment Quote Split */
+.sentiment-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.box-pos { border-left: 3px solid var(--private); }
+.box-neg { border-left: 3px solid var(--danger); }
+.quote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.quote-item {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--muted);
+  background: var(--bg-2);
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--r-sm);
+  font-style: italic;
+}
+.playbook-box { margin-top: 1rem; }
+
+/* ---------- Tab 5: What-If Simulator Layout ---------- */
+.simulator-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+.sim-room-types {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+.sim-chip {
+  flex: 1;
+  text-align: center;
+  padding: 0.55rem 0.4rem;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+.sim-chip input { display: none; }
+.sim-chip:has(input:checked) {
+  border-color: var(--signal);
+  color: var(--signal);
+  background: rgba(255, 210, 63, 0.1);
+  font-weight: 600;
+}
+.label-val-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.range-live-val {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--signal);
+}
+.switches-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+.sim-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font-size: 0.825rem;
+  cursor: pointer;
+}
+.sim-switch input { accent-color: var(--signal); }
+
+/* Verdict Banner */
+.verdict-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem 1.35rem;
+  border-radius: var(--r-md);
+  background: rgba(52, 209, 127, 0.12);
+  border: 1px solid rgba(52, 209, 127, 0.35);
+  margin-bottom: 1.25rem;
+}
+.verdict-icon { font-size: 1.85rem; line-height: 1; }
+.verdict-copy {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+/* Comparison Cards */
+.sim-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.sim-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.sim-box-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.highlight-sim {
+  border-color: rgba(52, 209, 127, 0.45);
+  box-shadow: 0 0 16px rgba(52, 209, 127, 0.08);
+}
+.highlight-sim .sim-box-tag { color: var(--private); }
+.sim-metric-group { display: flex; flex-direction: column; }
+.sim-lbl { font-size: 0.75rem; color: var(--muted); }
+.sim-val {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  color: var(--text);
+}
+.val-glow { color: var(--private); }
+
+/* Responsive adjustments for SaaS layouts */
+@media (max-width: 960px) {
+  .pricing-layout, .roi-calc-grid, .sentiment-layout, .simulator-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .aspect-grid, .sentiment-split-grid, .ts-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
+/* ==========================================================
+   UNIQUE THEMATIC BACKGROUNDS & ATMOSPHERES FOR EACH TAB
+   ========================================================== */
+
+body {
+  transition: background-color 0.4s var(--ease-out);
+  position: relative;
+}
+
+/* Ambient dynamic backdrop glow */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.5s ease, background 0.5s ease;
+}
+
+/* 1. ROOM CLASSIFIER THEME: NYC Subway Midnight Transit */
+body[data-active-tab="classifier"] {
+  background-color: #0e1320;
+}
+body[data-active-tab="classifier"] .routes {
+  opacity: 1;
+}
+body[data-active-tab="classifier"]::before {
+  background: 
+    radial-gradient(circle 800px at 50% -10%, rgba(255, 210, 63, 0.08), transparent 75%),
+    radial-gradient(circle 600px at 90% 60%, rgba(91, 148, 255, 0.07), transparent 70%);
+}
+
+/* 2. DYNAMIC PRICING THEME: Fintech Emerald & Gold Yield Matrix */
+body[data-active-tab="pricing"] {
+  background-color: #081416;
+}
+body[data-active-tab="pricing"] .routes {
+  opacity: 0.08;
+}
+body[data-active-tab="pricing"]::before {
+  background: 
+    radial-gradient(circle 900px at 20% -15%, rgba(52, 209, 127, 0.16), transparent 70%),
+    radial-gradient(circle 650px at 85% 45%, rgba(255, 210, 63, 0.11), transparent 70%),
+    radial-gradient(circle 500px at 50% 90%, rgba(52, 209, 127, 0.08), transparent 70%),
+    linear-gradient(rgba(52, 209, 127, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 209, 127, 0.035) 1px, transparent 1px);
+  background-size: auto, auto, auto, 50px 50px, 50px 50px;
+}
+body[data-active-tab="pricing"] .saas-tab[data-tab="pricing"] {
+  color: #34d17f;
+  border-color: rgba(52, 209, 127, 0.5);
+  box-shadow: 0 0 16px rgba(52, 209, 127, 0.2);
+}
+#pane-pricing .hero-badge {
+  background: rgba(52, 209, 127, 0.15);
+  color: #34d17f;
+  border-color: rgba(52, 209, 127, 0.4);
+}
+#pane-pricing .panel-box {
+  background: #0d1e22;
+  border-color: #1a3942;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+#pane-pricing .saas-select,
+#pane-pricing .saas-input {
+  background: #09171b;
+  border-color: #1a3942;
+}
+
+/* 3. REAL ESTATE ROI THEME: Luxury Architectural Gold & Blueprint */
+body[data-active-tab="roi"] {
+  background-color: #131018;
+}
+body[data-active-tab="roi"] .routes {
+  opacity: 0.06;
+}
+body[data-active-tab="roi"]::before {
+  background: 
+    radial-gradient(circle 850px at 25% -10%, rgba(255, 179, 71, 0.18), transparent 70%),
+    radial-gradient(circle 700px at 80% 75%, rgba(217, 119, 6, 0.12), transparent 70%),
+    radial-gradient(circle 500px at 10% 85%, rgba(139, 92, 246, 0.08), transparent 70%),
+    linear-gradient(rgba(255, 179, 71, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 179, 71, 0.04) 1px, transparent 1px);
+  background-size: auto, auto, auto, 38px 38px, 38px 38px;
+}
+body[data-active-tab="roi"] .saas-tab[data-tab="roi"] {
+  color: #ffb347;
+  border-color: rgba(255, 179, 71, 0.5);
+  box-shadow: 0 0 16px rgba(255, 179, 71, 0.25);
+}
+#pane-roi .hero-badge {
+  background: rgba(255, 179, 71, 0.16);
+  color: #ffb347;
+  border-color: rgba(255, 179, 71, 0.4);
+}
+#pane-roi .panel-box {
+  background: #1b1724;
+  border-color: #352b47;
+  box-shadow: 0 8px 32px rgba(255, 179, 71, 0.04);
+}
+#pane-roi .saas-select,
+#pane-roi .saas-input {
+  background: #14101c;
+  border-color: #352b47;
+}
+
+/* 4. NLP REVIEW SENTIMENT THEME: AI Neural Aurora & Constellation */
+body[data-active-tab="sentiment"] {
+  background-color: #0e0d1c;
+}
+body[data-active-tab="sentiment"] .routes {
+  opacity: 0.07;
+}
+body[data-active-tab="sentiment"]::before {
+  background: 
+    radial-gradient(circle 800px at 30% -10%, rgba(168, 85, 247, 0.2), transparent 70%),
+    radial-gradient(circle 650px at 80% 40%, rgba(52, 209, 127, 0.14), transparent 70%),
+    radial-gradient(circle 600px at 50% 90%, rgba(236, 72, 153, 0.09), transparent 70%),
+    radial-gradient(circle 2px at 15% 25%, rgba(168, 85, 247, 0.4), transparent 2px),
+    radial-gradient(circle 2px at 45% 65%, rgba(52, 209, 127, 0.4), transparent 2px),
+    radial-gradient(circle 2px at 85% 15%, rgba(255, 255, 255, 0.35), transparent 2px),
+    radial-gradient(circle 2px at 75% 80%, rgba(168, 85, 247, 0.35), transparent 2px);
+  background-size: auto, auto, auto, 120px 120px, 140px 140px, 90px 90px, 110px 110px;
+}
+body[data-active-tab="sentiment"] .saas-tab[data-tab="sentiment"] {
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.25);
+}
+#pane-sentiment .hero-badge {
+  background: rgba(168, 85, 247, 0.18);
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.45);
+}
+#pane-sentiment .panel-box {
+  background: #17152b;
+  border-color: #2b274e;
+  box-shadow: 0 8px 32px rgba(168, 85, 247, 0.06);
+}
+#pane-sentiment .saas-textarea {
+  background: #110f21;
+  border-color: #2b274e;
+}
+
+/* 5. 'WHAT-IF' SIMULATOR THEME: Cyber Telemetry Cockpit & Cyan Grid */
+body[data-active-tab="simulator"] {
+  background-color: #07131e;
+}
+body[data-active-tab="simulator"] .routes {
+  opacity: 0.08;
+}
+body[data-active-tab="simulator"]::before {
+  background: 
+    radial-gradient(circle 800px at 50% -15%, rgba(0, 229, 255, 0.18), transparent 70%),
+    radial-gradient(circle 650px at 90% 75%, rgba(255, 64, 129, 0.11), transparent 70%),
+    radial-gradient(circle 500px at 15% 65%, rgba(0, 229, 255, 0.08), transparent 70%),
+    repeating-linear-gradient(0deg, transparent, transparent 32px, rgba(0, 229, 255, 0.025) 32px, rgba(0, 229, 255, 0.025) 33px),
+    repeating-linear-gradient(90deg, transparent, transparent 32px, rgba(0, 229, 255, 0.025) 32px, rgba(0, 229, 255, 0.025) 33px);
+}
+body[data-active-tab="simulator"] .saas-tab[data-tab="simulator"] {
+  color: #00e5ff;
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.25);
+}
+#pane-simulator .hero-badge {
+  background: rgba(0, 229, 255, 0.16);
+  color: #00e5ff;
+  border-color: rgba(0, 229, 255, 0.4);
+}
+#pane-simulator .panel-box {
+  background: #0d1e2e;
+  border-color: #1a3854;
+  box-shadow: 0 8px 32px rgba(0, 229, 255, 0.05);
+}
+#pane-simulator .saas-select,
+#pane-simulator .saas-input {
+  background: #081724;
+  border-color: #1a3854;
+}
+
+/* ==========================================================
+   MODULE HERO SUMMARY POINTS CARD
+   ========================================================== */
+.module-summary-box {
+  margin-top: 1.25rem;
+  padding: 1rem 1.35rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  max-width: 900px;
+  backdrop-filter: blur(8px);
+}
+
+.summary-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 0.6rem 1.25rem;
+}
+
+.summary-list li {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  position: relative;
+  padding-left: 1.2rem;
+}
+
+.summary-list li strong {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.summary-list li::before {
+  content: "▹";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: bold;
+}
+
+#pane-classifier .summary-list li::before { color: #ffd23f; }
+#pane-pricing .summary-list li::before    { color: #34d17f; }
+#pane-roi .summary-list li::before        { color: #ffb347; }
+#pane-sentiment .summary-list li::before  { color: #c084fc; }
+#pane-simulator .summary-list li::before  { color: #00e5ff; }
+
+#pane-classifier .module-summary-box { border-left: 3px solid #ffd23f; }
+#pane-pricing .module-summary-box    { border-left: 3px solid #34d17f; }
+#pane-roi .module-summary-box        { border-left: 3px solid #ffb347; }
+#pane-sentiment .module-summary-box  { border-left: 3px solid #c084fc; }
+#pane-simulator .module-summary-box  { border-left: 3px solid #00e5ff; }
+

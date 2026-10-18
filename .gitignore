@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Large temporary archives
+*.zip
+.vscode.zip
+all data.zip
+airbnb_saas_datasets.zip
+airbnb_all_datasets.zip
+
+# IDE configurations
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db

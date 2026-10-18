@@ -4,18 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>NYC Room-Type Predictor</title>
+  <title>AeroPulse NYC - SaaS Host & Investor Intelligence Suite</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-
-
-  <!-- Background: three routes draw themselves once on page load -->
+  <!-- Background subway routes animation -->
   <svg class="routes" viewBox="0 0 1440 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
     <path class="route r-blue"   pathLength="1" d="M-20 300 H120 L200 220 H500 L580 140 H1000 L1080 60 H1460"/>
     <path class="route r-green"  pathLength="1" d="M-20 120 H180 L260 200 H640 L720 280 H1100 L1180 200 H1460"/>
@@ -29,223 +27,861 @@
 
   <header class="site-header">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true">N</span>
-      <span class="brand-name">NYC Room-Type Predictor</span>
+      <span class="brand-mark" aria-hidden="true">AP</span>
+      <div>
+        <span class="brand-name">AeroPulse NYC</span>
+        <span class="brand-tag">SaaS Intelligence Suite</span>
+      </div>
     </div>
-    <button type="button" class="api-pill" id="api-pill" data-status="checking" aria-haspopup="dialog">
-      <span class="dot" aria-hidden="true"></span>
-      <span id="api-pill-text">Checking API…</span>
-    </button>
+    <div class="header-actions">
+      <button type="button" class="api-pill" id="api-pill" data-status="checking" aria-haspopup="dialog">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="api-pill-text">Checking API…</span>
+      </button>
+    </div>
   </header>
 
-  <main>
-    <section class="hero">
-      <h1>Entire home, private room, or shared room?</h1>
-      <p class="lede">Describe a New York Airbnb listing and the model tells you which room type it most likely is, with the odds for all three.</p>
-    </section>
-
-    <div class="layout">
-
-      <!-- ============== FORM ============== -->
-      <form id="predict-form" novalidate autocomplete="off">
-
-        <div class="presets" role="group" aria-labelledby="presets-label">
-          <span id="presets-label" class="presets-label">Start from an example</span>
-          <button type="button" class="preset" data-preset="midtown">Midtown loft</button>
-          <button type="button" class="preset" data-preset="williamsburg">Williamsburg apartment</button>
-          <button type="button" class="preset" data-preset="bushwick">Bushwick spare room</button>
-          <button type="button" class="preset" data-preset="hellskitchen">Hell's Kitchen bunk</button>
-          <button type="button" class="preset" data-preset="fordham">Fordham, hard call</button>
-        </div>
-
-        <!-- Where -->
-        <fieldset class="stop">
-          <legend>Where is it?</legend>
-
-          <div class="field">
-            <span class="label" id="borough-label">Borough</span>
-            <div class="chips" role="radiogroup" aria-labelledby="borough-label" id="borough-chips">
-              <label class="chip"><input type="radio" name="neighbourhood_group" value="Bronx"><span>Bronx</span></label>
-              <label class="chip"><input type="radio" name="neighbourhood_group" value="Brooklyn"><span>Brooklyn</span></label>
-              <label class="chip"><input type="radio" name="neighbourhood_group" value="Manhattan" checked><span>Manhattan</span></label>
-              <label class="chip"><input type="radio" name="neighbourhood_group" value="Queens"><span>Queens</span></label>
-              <label class="chip"><input type="radio" name="neighbourhood_group" value="Staten Island"><span>Staten Island</span></label>
-            </div>
-          </div>
-
-          <div class="field">
-            <label class="label" for="neighbourhood">Neighbourhood</label>
-            <div class="combo" id="combo">
-              <input id="neighbourhood" name="neighbourhood" type="text" role="combobox"
-                     aria-expanded="false" aria-controls="hood-list" aria-autocomplete="list"
-                     placeholder="Start typing, e.g. Midtown" spellcheck="false">
-              <ul id="hood-list" role="listbox" aria-label="Neighbourhoods" hidden></ul>
-            </div>
-            <p class="error-text" id="err-neighbourhood" hidden></p>
-          </div>
-
-          <div class="field coords">
-            <div class="coords-inputs">
-              <div>
-                <label class="label" for="latitude">Latitude</label>
-                <input id="latitude" name="latitude" type="number" step="any" inputmode="decimal" value="40.7831">
-                <p class="error-text" id="err-latitude" hidden></p>
-              </div>
-              <div>
-                <label class="label" for="longitude">Longitude</label>
-                <input id="longitude" name="longitude" type="number" step="any" inputmode="decimal" value="-73.9712">
-                <p class="error-text" id="err-longitude" hidden></p>
-              </div>
-              <button type="button" class="link-btn" id="reset-coords">Move pin to borough center</button>
-            </div>
-
-            <div class="locator-wrap">
-              <svg id="locator" viewBox="0 0 265 220" role="img" aria-label="Locator. Click or drag to move the pin and set latitude and longitude.">
-                <g class="grid" id="locator-grid"></g>
-                <g id="locator-centers"></g>
-                <g id="pin" transform="translate(130 80)">
-                  <circle class="pin-ring" r="12"/>
-                  <circle class="pin-dot" r="5.5"/>
-                </g>
-              </svg>
-              <p class="hint">Click or drag on the locator to place the pin.</p>
-            </div>
-          </div>
-        </fieldset>
-
-        <!-- Price and stay -->
-        <fieldset class="stop">
-          <legend>Price and stay</legend>
-
-          <div class="field">
-            <label class="label" for="price">Price per night</label>
-            <div class="pair">
-              <div class="prefixed"><span aria-hidden="true">$</span>
-                <input id="price" name="price" type="number" min="1" step="1" inputmode="numeric" value="150">
-              </div>
-              <input id="price-range" class="range" type="range" min="10" max="1000" step="5" value="150" aria-label="Price per night slider">
-            </div>
-            <p class="error-text" id="err-price" hidden></p>
-          </div>
-
-          <div class="field">
-            <label class="label" for="minimum_nights">Minimum nights</label>
-            <div class="stepper" data-min="1" data-max="365" data-step="1">
-              <button type="button" data-dir="-1" aria-label="One fewer night">−</button>
-              <input id="minimum_nights" name="minimum_nights" type="number" min="1" max="365" step="1" inputmode="numeric" value="2">
-              <button type="button" data-dir="1" aria-label="One more night">+</button>
-            </div>
-            <p class="error-text" id="err-minimum_nights" hidden></p>
-          </div>
-
-          <div class="field">
-            <label class="label" for="availability_365">Days available per year</label>
-            <div class="pair">
-              <input id="availability_365" name="availability_365" type="number" min="0" max="365" step="1" inputmode="numeric" value="180" class="narrow">
-              <input id="availability-range" class="range" type="range" min="0" max="365" step="1" value="180" aria-label="Days available slider">
-            </div>
-            <div class="year" id="year" aria-hidden="true"></div>
-            <p class="hint" id="year-note">About 6 months of the year</p>
-            <p class="error-text" id="err-availability_365" hidden></p>
-          </div>
-        </fieldset>
-
-        <!-- Reviews and host -->
-        <fieldset class="stop">
-          <legend>Reviews and host</legend>
-
-          <div class="trio">
-            <div class="field">
-              <label class="label" for="number_of_reviews">Total reviews</label>
-              <div class="stepper" data-min="0" data-max="100000" data-step="1">
-                <button type="button" data-dir="-1" aria-label="One fewer review">−</button>
-                <input id="number_of_reviews" name="number_of_reviews" type="number" min="0" step="1" inputmode="numeric" value="25">
-                <button type="button" data-dir="1" aria-label="One more review">+</button>
-              </div>
-              <p class="error-text" id="err-number_of_reviews" hidden></p>
-            </div>
-
-            <div class="field">
-              <label class="label" for="reviews_per_month">Reviews per month</label>
-              <div class="stepper" data-min="0" data-max="100" data-step="0.1">
-                <button type="button" data-dir="-1" aria-label="Fewer reviews per month">−</button>
-                <input id="reviews_per_month" name="reviews_per_month" type="number" min="0" step="any" inputmode="decimal" value="0.8">
-                <button type="button" data-dir="1" aria-label="More reviews per month">+</button>
-              </div>
-              <p class="error-text" id="err-reviews_per_month" hidden></p>
-            </div>
-
-            <div class="field">
-              <label class="label" for="calculated_host_listings_count">Host's listings</label>
-              <div class="stepper" data-min="0" data-max="10000" data-step="1">
-                <button type="button" data-dir="-1" aria-label="One fewer listing">−</button>
-                <input id="calculated_host_listings_count" name="calculated_host_listings_count" type="number" min="0" step="1" inputmode="numeric" value="1">
-                <button type="button" data-dir="1" aria-label="One more listing">+</button>
-              </div>
-              <p class="error-text" id="err-calculated_host_listings_count" hidden></p>
-            </div>
-          </div>
-          <p class="hint">No reviews yet? Set both review fields to 0.</p>
-        </fieldset>
-
-        <div class="submit-row">
-          <button type="submit" class="primary" id="submit-btn">
-            <span class="btn-label">Predict room type</span>
-            <span class="spinner" aria-hidden="true"></span>
-          </button>
-          <button type="button" class="link-btn" id="reset-form">Reset form</button>
-        </div>
-      </form>
-
-      <!-- ============== RESULT ============== -->
-      <aside class="result" id="result" data-state="idle" aria-live="polite" aria-labelledby="result-title">
-        <div class="result-head">
-          <h2 id="result-title">Prediction</h2>
-          <span class="latency" id="latency" hidden></span>
-        </div>
-
-        <div class="verdict">
-          <div class="bullet" id="bullet" aria-hidden="true">?</div>
-          <div class="verdict-text">
-            <p class="verdict-label" id="verdict-label">Waiting for a listing</p>
-            <p class="verdict-sub" id="verdict-sub">Fill in the details, then press Predict room type.</p>
-          </div>
-        </div>
-
-        <ul class="lines" id="lines"></ul>
-
-        <div class="error-box" id="error-box" role="alert" hidden>
-          <p class="error-title" id="error-title"></p>
-          <p class="error-body" id="error-body"></p>
-        </div>
-
-        <details class="payload" id="payload-box" hidden>
-          <summary>See what was sent to the API</summary>
-          <pre id="payload"></pre>
-          <button type="button" class="link-btn" id="copy-payload">Copy JSON</button>
-        </details>
-
-        <section class="history" aria-labelledby="history-title">
-          <div class="history-head">
-            <h3 id="history-title">Recent predictions</h3>
-            <button type="button" class="link-btn" id="clear-history" hidden>Clear</button>
-          </div>
-          <ol id="history-list"></ol>
-          <p class="empty" id="history-empty">Your predictions will collect here. Select one to reload its details into the form.</p>
-        </section>
-      </aside>
+  <!-- SaaS Navigation Bar -->
+  <nav class="saas-nav" aria-label="SaaS Modules Navigation">
+    <div class="nav-scroller">
+      <button type="button" class="saas-tab active" data-tab="classifier">
+        <span class="tab-icon">🎯</span>
+        <span>Room Classifier & Valuation</span>
+      </button>
+      <button type="button" class="saas-tab" data-tab="pricing">
+        <span class="tab-icon">📈</span>
+        <span>Dynamic Pricing Strategy</span>
+      </button>
+      <button type="button" class="saas-tab" data-tab="roi">
+        <span class="tab-icon">🏢</span>
+        <span>Real Estate ROI Predictor</span>
+      </button>
+      <button type="button" class="saas-tab" data-tab="sentiment">
+        <span class="tab-icon">💬</span>
+        <span>NLP Review Sentiment</span>
+      </button>
+      <button type="button" class="saas-tab" data-tab="simulator">
+        <span class="tab-icon">⚡</span>
+        <span>'What-If' Scenario Simulator</span>
+      </button>
     </div>
+  </nav>
+
+  <main>
+
+    <!-- ========================================================
+         TAB 1: ML ROOM CLASSIFIER & VALUATION
+         ======================================================== -->
+    <div class="tab-pane active" id="pane-classifier">
+      <section class="hero">
+        <div class="hero-badge">AI CLASSIFICATION & TRANSIT INTELLIGENCE</div>
+        <h1>Entire home, private room, or shared room?</h1>
+        <p class="lede">Describe a New York Airbnb listing. Our Random Forest machine learning pipeline predicts the exact room type, odds distribution, and pulls real-time NYC MTA Subway & NYPD safety metrics.</p>
+
+        <!-- Summary Points Box -->
+        <div class="module-summary-box">
+          <div class="summary-title">📌 Key Capabilities & Deliverables:</div>
+          <ul class="summary-list">
+            <li><strong>Predictive ML Classification:</strong> Accurately predicts room type (Entire home, Private room, or Shared room) using multi-class Random Forest & Deep Neural Network pipelines.</li>
+            <li><strong>Fair Valuation & Odds:</strong> Evaluates listing pricing against borough averages and provides probabilistic confidence scores.</li>
+            <li><strong>MTA Transit Proximity:</strong> Computes walking time (minutes) and distance to the nearest NYC subway hub and transit lines.</li>
+            <li><strong>NYPD Safety Rating:</strong> Integrates precinct-level security indices to deliver an objective safety grade (A+, A, B).</li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="layout">
+        <!-- FORM -->
+        <form id="predict-form" novalidate autocomplete="off">
+          <div class="presets" role="group" aria-labelledby="presets-label">
+            <span id="presets-label" class="presets-label">Start from an example</span>
+            <button type="button" class="preset" data-preset="midtown">Midtown loft</button>
+            <button type="button" class="preset" data-preset="williamsburg">Williamsburg apartment</button>
+            <button type="button" class="preset" data-preset="bushwick">Bushwick spare room</button>
+            <button type="button" class="preset" data-preset="hellskitchen">Hell's Kitchen bunk</button>
+            <button type="button" class="preset" data-preset="fordham">Fordham, hard call</button>
+          </div>
+
+          <!-- Where -->
+          <fieldset class="stop">
+            <legend>Where is it?</legend>
+
+            <div class="field">
+              <span class="label" id="borough-label">Borough</span>
+              <div class="chips" role="radiogroup" aria-labelledby="borough-label" id="borough-chips">
+                <label class="chip"><input type="radio" name="neighbourhood_group" value="Bronx"><span>Bronx</span></label>
+                <label class="chip"><input type="radio" name="neighbourhood_group" value="Brooklyn"><span>Brooklyn</span></label>
+                <label class="chip"><input type="radio" name="neighbourhood_group" value="Manhattan" checked><span>Manhattan</span></label>
+                <label class="chip"><input type="radio" name="neighbourhood_group" value="Queens"><span>Queens</span></label>
+                <label class="chip"><input type="radio" name="neighbourhood_group" value="Staten Island"><span>Staten Island</span></label>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="neighbourhood">Neighbourhood</label>
+              <div class="combo" id="combo">
+                <input id="neighbourhood" name="neighbourhood" type="text" role="combobox"
+                       aria-expanded="false" aria-controls="hood-list" aria-autocomplete="list"
+                       placeholder="Start typing, e.g. Midtown" spellcheck="false">
+                <ul id="hood-list" role="listbox" aria-label="Neighbourhoods" hidden></ul>
+              </div>
+              <p class="error-text" id="err-neighbourhood" hidden></p>
+            </div>
+
+            <div class="field coords">
+              <div class="coords-inputs">
+                <div>
+                  <label class="label" for="latitude">Latitude</label>
+                  <input id="latitude" name="latitude" type="number" step="any" inputmode="decimal" value="40.7831">
+                  <p class="error-text" id="err-latitude" hidden></p>
+                </div>
+                <div>
+                  <label class="label" for="longitude">Longitude</label>
+                  <input id="longitude" name="longitude" type="number" step="any" inputmode="decimal" value="-73.9712">
+                  <p class="error-text" id="err-longitude" hidden></p>
+                </div>
+                <button type="button" class="link-btn" id="reset-coords">Move pin to borough center</button>
+              </div>
+
+              <div class="locator-wrap">
+                <svg id="locator" viewBox="0 0 265 220" role="img" aria-label="Locator. Click or drag to move the pin and set latitude and longitude.">
+                  <g class="grid" id="locator-grid"></g>
+                  <g id="locator-centers"></g>
+                  <g id="pin" transform="translate(130 80)">
+                    <circle class="pin-ring" r="12"/>
+                    <circle class="pin-dot" r="5.5"/>
+                  </g>
+                </svg>
+                <p class="hint">Click or drag on the locator to place the pin.</p>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Price and stay -->
+          <fieldset class="stop">
+            <legend>Price and stay</legend>
+
+            <div class="field">
+              <label class="label" for="price">Price per night</label>
+              <div class="pair">
+                <div class="prefixed"><span aria-hidden="true">$</span>
+                  <input id="price" name="price" type="number" min="1" step="1" inputmode="numeric" value="150">
+                </div>
+                <input id="price-range" class="range" type="range" min="10" max="1000" step="5" value="150" aria-label="Price per night slider">
+              </div>
+              <p class="error-text" id="err-price" hidden></p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="minimum_nights">Minimum nights</label>
+              <div class="stepper" data-min="1" data-max="365" data-step="1">
+                <button type="button" data-dir="-1" aria-label="One fewer night">−</button>
+                <input id="minimum_nights" name="minimum_nights" type="number" min="1" max="365" step="1" inputmode="numeric" value="2">
+                <button type="button" data-dir="1" aria-label="One more night">+</button>
+              </div>
+              <p class="error-text" id="err-minimum_nights" hidden></p>
+            </div>
+
+            <div class="field">
+              <label class="label" for="availability_365">Days available per year</label>
+              <div class="pair">
+                <input id="availability_365" name="availability_365" type="number" min="0" max="365" step="1" inputmode="numeric" value="180" class="narrow">
+                <input id="availability-range" class="range" type="range" min="0" max="365" step="1" value="180" aria-label="Days available slider">
+              </div>
+              <div class="year" id="year" aria-hidden="true"></div>
+              <p class="hint" id="year-note">About 6 months of the year</p>
+              <p class="error-text" id="err-availability_365" hidden></p>
+            </div>
+          </fieldset>
+
+          <!-- Reviews and host -->
+          <fieldset class="stop">
+            <legend>Reviews and host</legend>
+
+            <div class="trio">
+              <div class="field">
+                <label class="label" for="number_of_reviews">Total reviews</label>
+                <div class="stepper" data-min="0" data-max="100000" data-step="1">
+                  <button type="button" data-dir="-1" aria-label="One fewer review">−</button>
+                  <input id="number_of_reviews" name="number_of_reviews" type="number" min="0" step="1" inputmode="numeric" value="25">
+                  <button type="button" data-dir="1" aria-label="One more review">+</button>
+                </div>
+                <p class="error-text" id="err-number_of_reviews" hidden></p>
+              </div>
+
+              <div class="field">
+                <label class="label" for="reviews_per_month">Reviews per month</label>
+                <div class="stepper" data-min="0" data-max="100" data-step="0.1">
+                  <button type="button" data-dir="-1" aria-label="Fewer reviews per month">−</button>
+                  <input id="reviews_per_month" name="reviews_per_month" type="number" min="0" step="any" inputmode="decimal" value="0.8">
+                  <button type="button" data-dir="1" aria-label="More reviews per month">+</button>
+                </div>
+                <p class="error-text" id="err-reviews_per_month" hidden></p>
+              </div>
+
+              <div class="field">
+                <label class="label" for="calculated_host_listings_count">Host's listings</label>
+                <div class="stepper" data-min="0" data-max="10000" data-step="1">
+                  <button type="button" data-dir="-1" aria-label="One fewer listing">−</button>
+                  <input id="calculated_host_listings_count" name="calculated_host_listings_count" type="number" min="0" step="1" inputmode="numeric" value="1">
+                  <button type="button" data-dir="1" aria-label="One more listing">+</button>
+                </div>
+                <p class="error-text" id="err-calculated_host_listings_count" hidden></p>
+              </div>
+            </div>
+            <p class="hint">No reviews yet? Set both review fields to 0.</p>
+          </fieldset>
+
+          <div class="submit-row">
+            <button type="submit" class="primary" id="submit-btn">
+              <span class="btn-label">Predict room type</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="link-btn" id="reset-form">Reset form</button>
+          </div>
+        </form>
+
+        <!-- RESULT -->
+        <aside class="result" id="result" data-state="idle" aria-live="polite" aria-labelledby="result-title">
+          <div class="result-head">
+            <h2 id="result-title">Prediction</h2>
+            <span class="latency" id="latency" hidden></span>
+          </div>
+
+          <div class="verdict">
+            <div class="bullet" id="bullet" aria-hidden="true">?</div>
+            <div class="verdict-text">
+              <p class="verdict-label" id="verdict-label">Waiting for a listing</p>
+              <p class="verdict-sub" id="verdict-sub">Fill in the details, then press Predict room type.</p>
+            </div>
+          </div>
+
+          <ul class="lines" id="lines"></ul>
+
+          <!-- External Transit & Safety Intelligence Badge Panel -->
+          <div class="transit-safety-card" id="ts-card" hidden>
+            <div class="ts-head">
+              <span class="ts-title">🗽 NYC Transit & Safety Intelligence</span>
+              <span class="ts-tag">MTA & NYPD Data</span>
+            </div>
+            <div class="ts-grid">
+              <div class="ts-item">
+                <span class="ts-kpi-icon">🚇</span>
+                <div>
+                  <div class="ts-val"><span id="ts-score">94</span>/100 <span class="badge-grade" id="ts-grade">Grade A</span></div>
+                  <div class="ts-sub" id="ts-station">Bedford Av · 4 min walk</div>
+                  <div class="ts-lines" id="ts-lines-pills"></div>
+                </div>
+              </div>
+              <div class="ts-item">
+                <span class="ts-kpi-icon">🛡️</span>
+                <div>
+                  <div class="ts-val"><span id="safe-score">90</span>/100 <span class="badge-grade" id="safe-grade">Grade A</span></div>
+                  <div class="ts-sub" id="safe-precinct">NYPD 90th Precinct · Safe Urban Zone</div>
+                  <div class="ts-note">High night walkability rating</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="error-box" id="error-box" role="alert" hidden>
+            <p class="error-title" id="error-title"></p>
+            <p class="error-body" id="error-body"></p>
+          </div>
+
+          <details class="payload" id="payload-box" hidden>
+            <summary>See what was sent to the API</summary>
+            <pre id="payload"></pre>
+            <button type="button" class="link-btn" id="copy-payload">Copy JSON</button>
+          </details>
+
+          <section class="history" aria-labelledby="history-title">
+            <div class="history-head">
+              <h3 id="history-title">Recent predictions</h3>
+              <button type="button" class="link-btn" id="clear-history" hidden>Clear</button>
+            </div>
+            <ol id="history-list"></ol>
+            <p class="empty" id="history-empty">Your predictions will collect here. Select one to reload its details into the form.</p>
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         TAB 2: DYNAMIC PRICING STRATEGY (HOST DASHBOARD)
+         ======================================================== -->
+    <div class="tab-pane" id="pane-pricing">
+      <section class="hero">
+        <div class="hero-badge">REVENUE YIELD MANAGEMENT</div>
+        <h1>Dynamic Smart Pricing Strategy</h1>
+        <p class="lede">Replace static prices with an algorithmic yield model. Forecast 12-month demand curves, apply weekend surcharges, capitalize on NYC festival surges, and establish protective off-season price floors.</p>
+
+        <!-- Summary Points Box -->
+        <div class="module-summary-box">
+          <div class="summary-title">📌 Key Capabilities & Deliverables:</div>
+          <ul class="summary-list">
+            <li><strong>12-Month Demand Curve:</strong> Models seasonal price fluctuations from peak summer tourist demand down to post-holiday winter lulls.</li>
+            <li><strong>Weekend Yield Optimization:</strong> Automatically applies strategic weekend surcharges (+22%) for high-occupancy Friday & Saturday stays.</li>
+            <li><strong>Festival & Event Surges:</strong> Capitalizes on major NYC demand spikes like New Year's Eve (+65%), UN Assembly (+50%), and NYC Marathon.</li>
+            <li><strong>Off-Season Floor Protection:</strong> Establishes smart discount floors to sustain healthy booking occupancy during off-peak periods.</li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="pricing-layout">
+        <!-- Pricing Controls -->
+        <div class="pricing-controls panel-box">
+          <h3>Pricing Strategy Setup</h3>
+          
+          <div class="field">
+            <label class="label" for="dp-borough">Borough</label>
+            <select id="dp-borough" class="saas-select">
+              <option value="Manhattan">Manhattan</option>
+              <option value="Brooklyn">Brooklyn</option>
+              <option value="Queens">Queens</option>
+              <option value="Bronx">Bronx</option>
+              <option value="Staten Island">Staten Island</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label" for="dp-neighbourhood">Neighbourhood</label>
+            <input type="text" id="dp-neighbourhood" class="saas-input" value="Williamsburg" list="dp-hoods-list" placeholder="e.g. Williamsburg, Midtown">
+            <datalist id="dp-hoods-list"></datalist>
+          </div>
+
+          <div class="field">
+            <label class="label" for="dp-room-type">Room Type</label>
+            <select id="dp-room-type" class="saas-select">
+              <option value="Entire home/apt">Entire home or apartment</option>
+              <option value="Private room">Private room</option>
+              <option value="Shared room">Shared room</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label" for="dp-base-price">Current Nightly Price ($)</label>
+            <div class="prefixed"><span aria-hidden="true">$</span>
+              <input type="number" id="dp-base-price" class="saas-input" value="180" min="10">
+            </div>
+            <p class="hint">Leave as-is to use current rate, or auto-benchmark with NYC data.</p>
+          </div>
+
+          <div class="field">
+            <label class="label">Yield Strategy Goal</label>
+            <div class="strategy-selector" role="radiogroup">
+              <label class="strategy-card">
+                <input type="radio" name="dp-strategy" value="balanced" checked>
+                <div class="strategy-content">
+                  <span class="strategy-name">⚖️ Balanced Optimizer</span>
+                  <span class="strategy-desc">Optimal profit & 75-80% healthy occupancy</span>
+                </div>
+              </label>
+              <label class="strategy-card">
+                <input type="radio" name="dp-strategy" value="aggressive_revenue">
+                <div class="strategy-content">
+                  <span class="strategy-name">🚀 Aggressive ADR</span>
+                  <span class="strategy-desc">+15% price markup, target high-net-worth guests</span>
+                </div>
+              </label>
+              <label class="strategy-card">
+                <input type="radio" name="dp-strategy" value="max_occupancy">
+                <div class="strategy-content">
+                  <span class="strategy-name">📈 Maximum Occupancy</span>
+                  <span class="strategy-desc">Competitive floor pricing, target 90%+ booked calendar</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <button type="button" class="primary full-width" id="btn-calc-pricing">
+            <span>Calculate Dynamic Pricing</span>
+          </button>
+          <p class="hint" id="dp-calc-hint" style="text-align: center; margin-top: 0.5rem;">Click the button above to calculate & update dynamic pricing.</p>
+        </div>
+
+        <!-- Pricing Results Display -->
+        <div class="pricing-display">
+          <!-- 4 KPI Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <span class="kpi-label">Recommended Base ADR</span>
+              <div class="kpi-val" id="dp-kpi-base">$180</div>
+              <span class="kpi-sub">Standard weekday rate</span>
+            </div>
+            <div class="kpi-card highlight-green">
+              <span class="kpi-label">Weekend Surge Rate</span>
+              <div class="kpi-val" id="dp-kpi-weekend">$220</div>
+              <span class="kpi-sub">+22% Friday & Saturday</span>
+            </div>
+            <div class="kpi-card highlight-orange">
+              <span class="kpi-label">Holiday / Festival Surge</span>
+              <div class="kpi-val" id="dp-kpi-surge">$270</div>
+              <span class="kpi-sub">+50% peak event rate</span>
+            </div>
+            <div class="kpi-card highlight-blue">
+              <span class="kpi-label">Off-Season Smart Floor</span>
+              <div class="kpi-val" id="dp-kpi-floor">$140</div>
+              <span class="kpi-sub">Winter discount baseline</span>
+            </div>
+          </div>
+
+          <!-- 12-Month Interactive Seasonality Forecast Chart -->
+          <div class="panel-box chart-card">
+            <div class="chart-header">
+              <div>
+                <h3>12-Month Dynamic Demand & Pricing Forecast</h3>
+                <p class="hint">Recommended rate ($) and projected occupancy (%) across all NYC seasons</p>
+              </div>
+              <div class="kpi-badge" id="dp-annual-rev">Annual: $58,400</div>
+            </div>
+            <div class="seasonal-bars" id="dp-seasonal-bars"></div>
+          </div>
+
+          <!-- NYC High-Demand Events Ticker -->
+          <div class="panel-box">
+            <h3>Upcoming NYC High-Demand Festivals & Peak Events</h3>
+            <p class="hint">Automatic surge pricing triggers for maximum revenue capture without manual work</p>
+            <div class="events-table-wrap">
+              <table class="saas-table" id="dp-events-table">
+                <thead>
+                  <tr>
+                    <th>Event</th>
+                    <th>Date / Window</th>
+                    <th>Demand Surge</th>
+                    <th>Host Market Drivers</th>
+                  </tr>
+                </thead>
+                <tbody id="dp-events-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Host Playbook Insights -->
+          <div class="panel-box advice-box">
+            <h3>💡 Algorithmic Host Insights</h3>
+            <ul class="bullet-list" id="dp-insights-list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         TAB 3: REAL ESTATE INVESTMENT ROI PREDICTOR
+         ======================================================== -->
+    <div class="tab-pane" id="pane-roi">
+      <section class="hero">
+        <div class="hero-badge">ACQUISITION INTELLIGENCE</div>
+        <h1>NYC Real Estate Investment ROI Predictor</h1>
+        <p class="lede">Identify the highest yielding NYC neighbourhoods to purchase an apartment for Airbnb. Evaluate purchase prices, projected short-term rental ADR, operating expenses, Cap Rate, and Payback period.</p>
+
+        <!-- Summary Points Box -->
+        <div class="module-summary-box">
+          <div class="summary-title">📌 Key Capabilities & Deliverables:</div>
+          <ul class="summary-list">
+            <li><strong>Neighbourhood Benchmarking:</strong> Analyzes property acquisition costs, occupancy rates, and short-term rental revenue across 20 NYC areas.</li>
+            <li><strong>Cap Rate & NOI Calculation:</strong> Computes Net Operating Income (NOI) and unlevered Cap Rates to rank neighborhood profitability.</li>
+            <li><strong>Comprehensive Expense Waterfall:</strong> Deducts NYC property taxes, HOA/common charges, cleaning turnover labor, and host fees.</li>
+            <li><strong>Cash-on-Cash Return & Payback:</strong> Models leveraged returns based on custom mortgage interest rates and predicts the break-even payback period.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ROI Top Leaderboard -->
+      <div class="panel-box m-bottom">
+        <div class="table-head-flex">
+          <div>
+            <h3>🏆 NYC Top Investment Neighbourhoods Leaderboard</h3>
+            <p class="hint">Ranked by Cap Rate (Net Operating Income / Property Acquisition Cost)</p>
+          </div>
+          <div class="filter-chips" id="roi-borough-filter">
+            <button type="button" class="chip-sm active" data-bfilter="All">All NYC</button>
+            <button type="button" class="chip-sm" data-bfilter="Brooklyn">Brooklyn</button>
+            <button type="button" class="chip-sm" data-bfilter="Queens">Queens</button>
+            <button type="button" class="chip-sm" data-bfilter="Manhattan">Manhattan</button>
+            <button type="button" class="chip-sm" data-bfilter="Bronx">Bronx</button>
+            <button type="button" class="chip-sm" data-bfilter="Staten Island">Staten Island</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="saas-table" id="roi-leaderboard-table">
+            <thead>
+              <tr>
+                <th>Rank & Neighbourhood</th>
+                <th>Borough</th>
+                <th>Median Price</th>
+                <th>Gross Revenue</th>
+                <th>Net NOI</th>
+                <th>Cap Rate</th>
+                <th>Cash-on-Cash</th>
+                <th>Payback</th>
+                <th>Grade</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="roi-leaderboard-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Custom Property Investment Calculator -->
+      <div class="roi-calc-grid">
+        <div class="panel-box">
+          <h3>Custom Property Investment Calculator</h3>
+          <p class="hint">Analyze any specific apartment purchase in NYC</p>
+
+          <div class="field">
+            <label class="label" for="roi-borough">Borough</label>
+            <select id="roi-borough" class="saas-select">
+              <option value="Brooklyn">Brooklyn</option>
+              <option value="Manhattan">Manhattan</option>
+              <option value="Queens">Queens</option>
+              <option value="Bronx">Bronx</option>
+              <option value="Staten Island">Staten Island</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="label" for="roi-neighbourhood">Neighbourhood</label>
+            <input type="text" id="roi-neighbourhood" class="saas-input" value="Bushwick" list="roi-hoods-list" placeholder="Choose or type neighbourhood">
+            <datalist id="roi-hoods-list"></datalist>
+          </div>
+
+          <div class="field">
+            <label class="label" for="roi-price">Property Purchase Price ($)</label>
+            <div class="prefixed"><span aria-hidden="true">$</span>
+              <input type="number" id="roi-price" class="saas-input" value="630000" step="10000">
+            </div>
+          </div>
+
+          <div class="pair-fields">
+            <div class="field">
+              <label class="label" for="roi-down">Down Payment (%)</label>
+              <input type="number" id="roi-down" class="saas-input" value="25" min="10" max="100" step="5">
+            </div>
+            <div class="field">
+              <label class="label" for="roi-rate">Mortgage Rate (%)</label>
+              <input type="number" id="roi-rate" class="saas-input" value="6.75" min="2" max="15" step="0.25">
+            </div>
+          </div>
+
+          <button type="button" class="primary full-width" id="btn-calc-roi">
+            <span>Calculate Investment Returns</span>
+          </button>
+          <p class="hint" id="roi-calc-hint" style="text-align: center; margin-top: 0.5rem;">Click the button above to calculate & update returns.</p>
+        </div>
+
+        <div class="roi-results-display">
+          <div class="kpi-grid">
+            <div class="kpi-card highlight-green">
+              <span class="kpi-label">Unlevered Cap Rate</span>
+              <div class="kpi-val" id="roi-kpi-cap">8.4%</div>
+              <span class="kpi-sub" id="roi-kpi-grade">A+ (Elite Cashflow)</span>
+            </div>
+            <div class="kpi-card highlight-blue">
+              <span class="kpi-label">Cash-on-Cash Return</span>
+              <div class="kpi-val" id="roi-kpi-coc">9.8%</div>
+              <span class="kpi-sub">On total cash invested</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Monthly Net Cash Flow</span>
+              <div class="kpi-val" id="roi-kpi-cashflow">+$1,450</div>
+              <span class="kpi-sub">After mortgage & all fees</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Payback Period</span>
+              <div class="kpi-val" id="roi-kpi-payback">10.2 yrs</div>
+              <span class="kpi-sub" id="roi-kpi-breakeven">Breakeven: 142 days/yr</span>
+            </div>
+          </div>
+
+          <div class="panel-box expense-breakdown">
+            <h3>Annual Income & Expense Waterfall</h3>
+            <div class="waterfall-list" id="roi-waterfall"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         TAB 4: NLP BASED REVIEW SENTIMENT ANALYSIS
+         ======================================================== -->
+    <div class="tab-pane" id="pane-sentiment">
+      <section class="hero">
+        <div class="hero-badge">NLP GUEST INTELLIGENCE</div>
+        <h1>NLP Guest Review Sentiment & Aspect Extraction</h1>
+        <p class="lede">Natural Language Processing analyzes your guest reviews across 6 vital hospitality dimensions: Cleanliness, Location, Amenities/Wi-Fi, Host Communication, Noise, and Value. Instantly pinpoint what guests love and what requires urgent improvement.</p>
+
+        <!-- Summary Points Box -->
+        <div class="module-summary-box">
+          <div class="summary-title">📌 Key Capabilities & Deliverables:</div>
+          <ul class="summary-list">
+            <li><strong>6-Dimension Aspect Extraction:</strong> Dissects guest comments across Cleanliness, Location, Amenities, Communication, Noise, and Value.</li>
+            <li><strong>Automated Highlights & Pain Points:</strong> Pinpoints positive praises (e.g., sparkling clean, fast Wi-Fi) and operational complaints.</li>
+            <li><strong>Equivalent Star Rating:</strong> Translates free-form guest comments into an objective 1-to-5 star hospitality score.</li>
+            <li><strong>Actionable Superhost Guidance:</strong> Recommends immediate service fixes to boost review scores and Airbnb search ranking.</li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="sentiment-layout">
+        <div class="sentiment-input-card panel-box">
+          <div class="sample-reviews-row">
+            <span class="label">Quick Test Presets:</span>
+            <div class="preset-pills">
+              <button type="button" class="preset-pill active" data-sentiment-sample="superhost_loft">✨ 5-Star Williamsburg Loft</button>
+              <button type="button" class="preset-pill" data-sentiment-sample="mixed_midtown">⚡ Mixed Midtown (Wi-Fi & Noise)</button>
+              <button type="button" class="preset-pill" data-sentiment-sample="budget_room">⚠️ Budget Room (Cleanliness flags)</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="sentiment-text">Paste Guest Reviews (or write your own):</label>
+            <textarea id="sentiment-text" class="saas-textarea" rows="8" placeholder="Paste one or more guest reviews here..."></textarea>
+          </div>
+
+          <button type="button" class="primary full-width" id="btn-run-sentiment">
+            <span>Analyze Reviews with NLP</span>
+          </button>
+          <p class="hint" id="nlp-calc-hint" style="text-align: center; margin-top: 0.5rem;">Click the button above to run NLP aspect sentiment analysis.</p>
+        </div>
+
+        <div class="sentiment-results-card">
+          <!-- Overall Sentiment Score Meter -->
+          <div class="panel-box overall-sentiment-box">
+            <div class="sentiment-meter-flex">
+              <div class="sentiment-score-ring">
+                <span class="score-num" id="nlp-score">92</span>
+                <span class="score-sub">/ 100</span>
+              </div>
+              <div>
+                <div class="sentiment-tier" id="nlp-label">Very Positive</div>
+                <div class="sentiment-stars" id="nlp-stars">⭐ 4.84 / 5.0 Rating Equivalent</div>
+                <p class="hint" id="nlp-summary">Based on sentiment polarity and keyword aspect density.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 Aspect Progress Bars -->
+          <div class="panel-box">
+            <h3>Aspect Sentiment Breakdown</h3>
+            <div class="aspect-grid" id="nlp-aspects"></div>
+          </div>
+
+          <!-- Highlights & Red Flags -->
+          <div class="sentiment-split-grid">
+            <div class="panel-box box-pos">
+              <h4>💚 What Guests Loved (Highlights)</h4>
+              <ul class="quote-list" id="nlp-pos-quotes"></ul>
+            </div>
+            <div class="panel-box box-neg">
+              <h4>⚠️ Needs Improvement (Red Flags)</h4>
+              <ul class="quote-list" id="nlp-neg-quotes"></ul>
+            </div>
+          </div>
+
+          <!-- Actionable AI Host Playbook -->
+          <div class="panel-box playbook-box">
+            <h3>🛠️ AI Host Service Improvement Playbook</h3>
+            <ul class="bullet-list" id="nlp-playbook-list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         TAB 5: 'WHAT-IF' SCENARIO SIMULATOR
+         ======================================================== -->
+    <div class="tab-pane" id="pane-simulator">
+      <section class="hero">
+        <div class="hero-badge">INTERACTIVE SIMULATION LAB</div>
+        <h1>Host 'What-If' Scenario Revenue Simulator</h1>
+        <p class="lede">Simulate listing modifications before publishing. Test how changing minimum nights (e.g. 1 night to 3 nights), converting a shared room to private, or upgrading amenities alters occupancy, monthly profit, and host turnover labor.</p>
+
+        <!-- Summary Points Box -->
+        <div class="module-summary-box">
+          <div class="summary-title">📌 Key Capabilities & Deliverables:</div>
+          <ul class="summary-list">
+            <li><strong>Price Elasticity Forecasting:</strong> Predicts how price increases or discounts impact guest demand and occupancy probability.</li>
+            <li><strong>Minimum Stay Friction Curve:</strong> Models the trade-off of shifting from 1-night to 3-night rules (steady stays vs. booking rate).</li>
+            <li><strong>Operational Workload Analysis:</strong> Calculates monthly cleaning turnovers and host labor hours saved or required.</li>
+            <li><strong>Bottom-Line Financial Verdict:</strong> Quantifies net monthly and annual income deltas before committing changes live.</li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="simulator-layout">
+        <!-- Simulator Inputs -->
+        <div class="sim-inputs-col panel-box">
+          <h3>Simulation Parameter Adjustments</h3>
+
+          <div class="field">
+            <label class="label">Target Neighbourhood</label>
+            <div class="pair-inputs">
+              <select id="sim-borough" class="saas-select">
+                <option value="Brooklyn" selected>Brooklyn</option>
+                <option value="Manhattan">Manhattan</option>
+                <option value="Queens">Queens</option>
+                <option value="Bronx">Bronx</option>
+                <option value="Staten Island">Staten Island</option>
+              </select>
+              <input type="text" id="sim-hood" class="saas-input" value="Williamsburg" list="sim-hoods-list" placeholder="Choose or type neighbourhood">
+              <datalist id="sim-hoods-list"></datalist>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Room Type Conversion</label>
+            <div class="sim-room-types">
+              <label class="sim-chip">
+                <input type="radio" name="sim-room" value="Shared room">
+                <span>Shared room</span>
+              </label>
+              <label class="sim-chip">
+                <input type="radio" name="sim-room" value="Private room">
+                <span>Private room</span>
+              </label>
+              <label class="sim-chip">
+                <input type="radio" name="sim-room" value="Entire home/apt" checked>
+                <span>Entire home/apt</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="label-val-row">
+              <label class="label" for="sim-min-nights">Minimum Nights</label>
+              <span class="range-live-val" id="sim-min-val">3 nights</span>
+            </div>
+            <input type="range" id="sim-min-nights" class="range" min="1" max="14" step="1" value="3">
+            <p class="hint">1-2 nights: high booking rate but high turnover labor. 3-7 nights: longer stays, less cleanings.</p>
+          </div>
+
+          <div class="field">
+            <div class="label-val-row">
+              <label class="label" for="sim-price">Nightly Price</label>
+              <span class="range-live-val" id="sim-price-val">$210 / night</span>
+            </div>
+            <input type="range" id="sim-price" class="range" min="30" max="600" step="5" value="210">
+          </div>
+
+          <div class="field">
+            <div class="label-val-row">
+              <label class="label" for="sim-cleaning">Cleaning Fee</label>
+              <span class="range-live-val" id="sim-cleaning-val">$75</span>
+            </div>
+            <input type="range" id="sim-cleaning" class="range" min="0" max="200" step="5" value="75">
+          </div>
+
+          <div class="field">
+            <span class="label">Value-Add Features</span>
+            <div class="switches-grid">
+              <label class="sim-switch">
+                <input type="checkbox" id="sim-instant" checked>
+                <span>⚡ Instant Bookable (+7% bookings)</span>
+              </label>
+              <label class="sim-switch">
+                <input type="checkbox" id="sim-superhost" checked>
+                <span>🏅 Superhost Status (+9% bookings)</span>
+              </label>
+              <label class="sim-switch">
+                <input type="checkbox" id="sim-wifi" checked>
+                <span>📶 300 Mbps Wi-Fi & Work Desk</span>
+              </label>
+              <label class="sim-switch">
+                <input type="checkbox" id="sim-selfcheck" checked>
+                <span>🔑 Keyless Smart Self Check-in</span>
+              </label>
+            </div>
+          </div>
+
+          <button type="button" class="primary full-width" id="btn-run-sim">
+            <span>Simulate Scenario Impact</span>
+          </button>
+          <p class="hint" id="sim-calc-hint" style="text-align: center; margin-top: 0.5rem;">Adjust parameters, then click button above to simulate impact.</p>
+        </div>
+
+        <!-- Simulator Outputs & Delta Visualizer -->
+        <div class="sim-outputs-col">
+          <!-- Strategic Recommendation Banner -->
+          <div class="verdict-banner" id="sim-verdict-banner">
+            <div class="verdict-icon">🚀</div>
+            <div class="verdict-copy" id="sim-verdict-text">
+              Simulating scenario...
+            </div>
+          </div>
+
+          <!-- Comparison Cards: Baseline vs Simulated -->
+          <div class="sim-comparison-grid">
+            <!-- Baseline Card -->
+            <div class="panel-box sim-box">
+              <span class="sim-box-tag">BASELINE CONFIGURATION</span>
+              <div class="sim-metric-group">
+                <span class="sim-lbl">Monthly Net Income</span>
+                <div class="sim-val" id="sim-base-income">$2,450</div>
+              </div>
+              <div class="sim-metric-group">
+                <span class="sim-lbl">Occupancy Rate</span>
+                <div class="sim-val" id="sim-base-occ">72% (22 nights)</div>
+              </div>
+              <div class="sim-metric-group">
+                <span class="sim-lbl">Monthly Cleanings</span>
+                <div class="sim-val" id="sim-base-cleanings">11 turnovers</div>
+              </div>
+            </div>
+
+            <!-- Simulated Card -->
+            <div class="panel-box sim-box highlight-sim">
+              <span class="sim-box-tag">SIMULATED SCENARIO</span>
+              <div class="sim-metric-group">
+                <span class="sim-lbl">Monthly Net Income</span>
+                <div class="sim-val val-glow" id="sim-res-income">$3,840</div>
+              </div>
+              <div class="sim-metric-group">
+                <span class="sim-lbl">Occupancy Rate</span>
+                <div class="sim-val" id="sim-res-occ">81% (25 nights)</div>
+              </div>
+              <div class="sim-metric-group">
+                <span class="sim-lbl">Monthly Cleanings</span>
+                <div class="sim-val" id="sim-res-cleanings">6 turnovers</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Impact Deltas Grid -->
+          <div class="kpi-grid">
+            <div class="kpi-card highlight-green">
+              <span class="kpi-label">Monthly Profit Delta</span>
+              <div class="kpi-val" id="sim-delta-monthly">+$1,390</div>
+              <span class="kpi-sub" id="sim-delta-pct">+56.7% income growth</span>
+            </div>
+            <div class="kpi-card highlight-orange">
+              <span class="kpi-label">Annualized Revenue Delta</span>
+              <div class="kpi-val" id="sim-delta-annual">+$16,680 / yr</div>
+              <span class="kpi-sub">Added bottom-line cash</span>
+            </div>
+            <div class="kpi-card highlight-blue">
+              <span class="kpi-label">Host Workload Efficiency</span>
+              <div class="kpi-val" id="sim-delta-hours">12.5 hrs saved</div>
+              <span class="kpi-sub" id="sim-delta-cleanings">5 fewer cleanings / month</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <footer class="foot">
-    <p>Predictions come from the model behind your FastAPI server. The page only talks to the API address you set.</p>
+    <p>AeroPulse NYC SaaS Intelligence Suite · Integrated with Scikit-Learn RandomForest Pipeline, MTA Transit Network, and NYPD CompStat.</p>
   </footer>
 
-  <!-- API settings -->
+  <!-- API Settings Dialog -->
   <dialog id="api-dialog" aria-labelledby="api-dialog-title">
     <form method="dialog" id="api-form">
-      <h2 id="api-dialog-title">API address</h2>
-      <p class="hint">Where your FastAPI server is running. Start it with <code>uvicorn main:app --reload</code>.</p>
+      <h2 id="api-dialog-title">API Connection Address</h2>
+      <p class="hint">Where your FastAPI server is running. Default: <code>http://127.0.0.1:8000</code> or your hosted endpoint.</p>
       <label class="label" for="api-url">Base URL</label>
       <input id="api-url" type="url" placeholder="http://127.0.0.1:8000" spellcheck="false">
       <p class="error-text" id="api-url-error" hidden></p>

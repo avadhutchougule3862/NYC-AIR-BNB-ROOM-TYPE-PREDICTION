@@ -1,0 +1,27 @@
+name,borough,lat,lng,lines,hub
+Times Sq - 42 St,Manhattan,40.758,-73.9855,"1, 2, 3, 7, N, Q, R, W, S",True
+Grand Central - 42 St,Manhattan,40.7527,-73.9772,"4, 5, 6, 7, S",True
+14 St - Union Sq,Manhattan,40.7359,-73.9911,"4, 5, 6, L, N, Q, R, W",True
+Fulton St,Manhattan,40.7103,-74.0076,"2, 3, 4, 5, A, C, J, Z",True
+Columbus Circle - 59 St,Manhattan,40.7681,-73.9819,"1, A, B, C, D",True
+Canal St,Manhattan,40.7188,-74.0018,"6, J, N, Q, R, W, Z",True
+86 St (Upper East),Manhattan,40.7779,-73.9518,"4, 5, 6, Q",False
+125 St (Harlem),Manhattan,40.8041,-73.9376,"4, 5, 6",True
+Bedford Av,Brooklyn,40.7173,-73.9568,L,True
+Atlantic Av - Barclays Ctr,Brooklyn,40.6837,-73.9788,"2, 3, 4, 5, B, D, N, Q, R",True
+Court St / Borough Hall,Brooklyn,40.6925,-73.9902,"2, 3, 4, 5, R",True
+Jefferson St,Brooklyn,40.7066,-73.9229,L,False
+Franklin Av,Brooklyn,40.6706,-73.9582,"2, 3, 4, 5, C, S",True
+Coney Island - Stillwell Av,Brooklyn,40.5772,-73.9812,"D, F, N, Q",True
+Court Sq - 23 St,Queens,40.7471,-73.9453,"7, E, F, G",True
+Astoria - Ditmars Blvd,Queens,40.775,-73.912,"N, W",False
+Jackson Hts - Roosevelt Av,Queens,40.7466,-73.8913,"7, E, F, M, R",True
+Flushing - Main St,Queens,40.7596,-73.83,7,True
+Forest Hills - 71 Av,Queens,40.7214,-73.8443,"E, F, M, R",True
+Jamaica Center - Parsons/Archer,Queens,40.7021,-73.8011,"E, J, Z",True
+161 St - Yankee Stadium,Bronx,40.8279,-73.9257,"4, B, D",True
+Fordham Rd,Bronx,40.8613,-73.8977,"4, B, D",True
+Third Av - 149 St,Bronx,40.8161,-73.9178,"2, 5",True
+Pelham Bay Park,Bronx,40.8525,-73.8281,6,True
+St. George Ferry Terminal,Staten Island,40.6437,-74.0736,"SIR, Ferry",True
+Tottenville,Staten Island,40.5128,-74.252,SIR,False

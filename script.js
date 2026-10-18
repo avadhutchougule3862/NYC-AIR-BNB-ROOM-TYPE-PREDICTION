@@ -6,7 +6,7 @@
 
 /* ---------- Config ---------- */
 
-const DEFAULT_API = " https://nyc-air-bnb-room-type-prediction-rdg0.onrender.com";
+const DEFAULT_API = (typeof window !== "undefined" && window.location.protocol.startsWith("http") ? window.location.origin : "http://127.0.0.1:8000");
 const STORE_API = "nyc-room-api-url";
 const STORE_HISTORY = "nyc-room-history";
 const HISTORY_MAX = 6;
@@ -593,7 +593,17 @@ function normaliseResponse(data) {
   return null;
 }
 
-function renderResult(norm, payload, ms) {
+function getMtaColorClass(line) {
+  if (["1", "2", "3"].includes(line)) return "mta-red";
+  if (["4", "5", "6"].includes(line)) return "mta-green";
+  if (["7"].includes(line)) return "mta-purple";
+  if (["N", "Q", "R", "W"].includes(line)) return "mta-yellow";
+  if (["B", "D", "F", "M"].includes(line)) return "mta-orange";
+  if (["L", "S", "SIR"].includes(line)) return "mta-gray";
+  return "mta-blue";
+}
+
+function renderResult(norm, payload, ms, rawData) {
   const entries = norm.probs
     .map((p, i) => ({ key: norm.classes[i] || `Class ${i + 1}`, pct: p * 100 }))
     .sort((a, b) => b.pct - a.pct);
@@ -634,6 +644,31 @@ function renderResult(norm, payload, ms) {
 
   $("#payload").textContent = JSON.stringify(payload, null, 2);
   $("#payload-box").hidden = false;
+
+  const tsCard = $("#ts-card");
+  if (rawData && rawData.transit_score !== undefined && tsCard) {
+    tsCard.hidden = false;
+    $("#ts-score").textContent = rawData.transit_score;
+    $("#ts-grade").textContent = rawData.transit_grade || "Grade A";
+    $("#ts-station").textContent = `${rawData.nearest_subway || "MTA Subway"} · ${rawData.walk_time_minutes || 4} min walk`;
+    
+    const linesWrap = $("#ts-lines-pills");
+    if (linesWrap && Array.isArray(rawData.subway_lines)) {
+      linesWrap.replaceChildren();
+      rawData.subway_lines.forEach(line => {
+        const span = document.createElement("span");
+        span.className = "mta-pill " + getMtaColorClass(line);
+        span.textContent = line;
+        linesWrap.appendChild(span);
+      });
+    }
+
+    $("#safe-score").textContent = rawData.safety_score;
+    $("#safe-grade").textContent = rawData.safety_grade || "Grade A";
+    $("#safe-precinct").textContent = `NYPD ${rawData.nypd_precinct || "Station"} · Safe Urban Zone`;
+  } else if (tsCard) {
+    tsCard.hidden = true;
+  }
 
   addHistory({ payload, key: winnerKey, pct: top.pct });
 
@@ -704,7 +739,7 @@ form.addEventListener("submit", async (e) => {
       );
       return;
     }
-    renderResult(norm, payload, performance.now() - t0);
+    renderResult(norm, payload, performance.now() - t0, data);
 
   } catch (err) {
     if (err.name === "AbortError") {
@@ -842,4 +877,728 @@ renderIdleLines();
 renderHistory();
 syncAll();
 checkApi();
+document.body.dataset.activeTab = "classifier";
 
+
+
+/* ==========================================================
+   AEROPULSE NYC - SAAS MODULES LOGIC
+   ========================================================== */
+
+/* ---------- SaaS Tab Navigation ---------- */
+const saasTabs = $$(".saas-tab");
+const tabPanes = $$(".tab-pane");
+
+saasTabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    const target = tab.dataset.tab;
+    document.body.dataset.activeTab = target;
+    saasTabs.forEach(t => t.classList.toggle("active", t === tab));
+    tabPanes.forEach(pane => {
+      pane.classList.toggle("active", pane.id === `pane-${target}`);
+    });
+    // Only fetch initial baseline demo data once per tab
+    if (tab.dataset.loaded !== "true") {
+      tab.dataset.loaded = "true";
+      if (target === "pricing") calculateDynamicPricing();
+      if (target === "roi") {
+        if (!fullLeaderboardData.length) loadRoiLeaderboard();
+        calculateCustomRoi();
+      }
+      if (target === "sentiment") {
+        if (!$("#sentiment-text").value.trim()) {
+          $("#sentiment-text").value = SAMPLE_REVIEWS.superhost_loft;
+        }
+        runNlpSentiment();
+      }
+      if (target === "simulator") runWhatIfSimulation();
+    }
+  });
+});
+
+
+/* ---------- 1. Dynamic Pricing Strategy (Host Dashboard) ---------- */
+
+async function calculateDynamicPricing() {
+  const borough = $("#dp-borough").value;
+  const neighbourhood = $("#dp-neighbourhood").value.trim() || "Williamsburg";
+  const room_type = $("#dp-room-type").value;
+  const base_price = parseFloat($("#dp-base-price").value) || null;
+  const strategy = document.querySelector('input[name="dp-strategy"]:checked')?.value || "balanced";
+
+  try {
+    const res = await fetch(apiBase + "/api/dynamic-pricing", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        neighbourhood_group: borough,
+        neighbourhood: neighbourhood,
+        room_type: room_type,
+        base_price: base_price,
+        strategy: strategy
+      })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    $("#dp-kpi-base").textContent = `$${Math.round(data.recommended_base_price)}`;
+    $("#dp-kpi-weekend").textContent = `$${Math.round(data.recommended_weekend_price)}`;
+    $("#dp-kpi-surge").textContent = `$${Math.round(data.recommended_holiday_surge)}`;
+    $("#dp-kpi-floor").textContent = `$${Math.round(data.recommended_off_season_floor)}`;
+    $("#dp-annual-rev").textContent = `Annual: $${Math.round(data.projected_annual_revenue).toLocaleString()}`;
+
+    // Render 12 Seasonal Bars
+    const barsContainer = $("#dp-seasonal-bars");
+    barsContainer.replaceChildren();
+    const maxVal = Math.max(...data.monthly_schedule.map(m => m.average_adr), 1);
+
+    data.monthly_schedule.forEach(m => {
+      const col = document.createElement("div");
+      col.className = "bar-col";
+      const heightPct = Math.round((m.average_adr / maxVal) * 100);
+      const isPeak = ["Jun", "Jul", "Aug", "Sep", "Dec"].includes(m.month);
+
+      col.innerHTML = `
+        <span class="bar-m-val">$${Math.round(m.average_adr)}</span>
+        <div class="bar-stick" title="${m.month}: $${m.average_adr}/night (${m.occupancy_rate}% occupancy)">
+          <div class="bar-stick-fill ${isPeak ? 'summer-peak' : ''}" style="height: ${heightPct}%;"></div>
+        </div>
+        <span class="bar-m-name">${m.month}</span>
+        <span class="bar-m-occ">${m.occupancy_rate}%</span>
+      `;
+      barsContainer.appendChild(col);
+    });
+
+    // Render Events Table
+    const eventsBody = $("#dp-events-body");
+    eventsBody.replaceChildren();
+    data.upcoming_events.forEach(ev => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${ev.name}</strong></td>
+        <td><code>${ev.date}</code></td>
+        <td><span class="badge-grade">+${ev.surge_pct}% Surge</span></td>
+        <td style="color: var(--muted);">${ev.reason}</td>
+      `;
+      eventsBody.appendChild(tr);
+    });
+
+    // Render Host Insights
+    const insightsList = $("#dp-insights-list");
+    insightsList.replaceChildren();
+    data.pricing_tips.forEach(tip => {
+      const li = document.createElement("li");
+      li.textContent = tip;
+      insightsList.appendChild(li);
+    });
+
+  } catch (err) {
+    console.error("Dynamic Pricing Error:", err);
+  }
+}
+
+function populateDpHoods(borough) {
+  const datalist = $("#dp-hoods-list");
+  if (!datalist) return;
+  datalist.replaceChildren();
+  const list = HOODS[borough] || [];
+  list.forEach(h => {
+    const opt = document.createElement("option");
+    opt.value = h;
+    datalist.appendChild(opt);
+  });
+}
+
+if ($("#dp-borough")) {
+  populateDpHoods($("#dp-borough").value);
+}
+
+function setDpHint(text, isReady = false) {
+  const hint = $("#dp-calc-hint");
+  if (!hint) return;
+  hint.textContent = text;
+  hint.style.color = isReady ? "var(--private)" : "var(--signal)";
+}
+
+$("#btn-calc-pricing").addEventListener("click", async () => {
+  const btn = $("#btn-calc-pricing");
+  const span = btn.querySelector("span");
+  const orig = span ? span.textContent : "Calculate Dynamic Pricing";
+  if (span) span.textContent = "Calculating Dynamic Pricing…";
+  btn.disabled = true;
+
+  try {
+    await calculateDynamicPricing();
+    setDpHint("✓ Dynamic pricing strategy calculated & updated!", true);
+    const resultsArea = $(".pricing-display");
+    if (resultsArea) {
+      resultsArea.classList.remove("flash");
+      void resultsArea.offsetWidth;
+      resultsArea.classList.add("flash");
+    }
+  } finally {
+    if (span) span.textContent = orig;
+    btn.disabled = false;
+  }
+});
+
+$("#dp-borough").addEventListener("change", () => {
+  const b = $("#dp-borough").value;
+  populateDpHoods(b);
+  if (b === "Manhattan") $("#dp-neighbourhood").value = "Midtown";
+  else if (b === "Brooklyn") $("#dp-neighbourhood").value = "Williamsburg";
+  else if (b === "Queens") $("#dp-neighbourhood").value = "Astoria";
+  else if (b === "Bronx") $("#dp-neighbourhood").value = "Fordham";
+  else if (b === "Staten Island") $("#dp-neighbourhood").value = "St. George";
+  setDpHint(`Borough changed to ${b}. Click "Calculate Dynamic Pricing" to update.`);
+});
+
+$("#dp-neighbourhood").addEventListener("change", () => {
+  setDpHint("Neighbourhood adjusted. Click 'Calculate Dynamic Pricing' to update.");
+});
+
+$("#dp-room-type").addEventListener("change", () => {
+  setDpHint("Room type adjusted. Click 'Calculate Dynamic Pricing' to update.");
+});
+
+$("#dp-base-price").addEventListener("input", () => {
+  setDpHint("Base price adjusted. Click 'Calculate Dynamic Pricing' to update.");
+});
+
+$$('input[name="dp-strategy"]').forEach(r => {
+  r.addEventListener("change", () => {
+    setDpHint("Yield strategy adjusted. Click 'Calculate Dynamic Pricing' to update.");
+  });
+});
+
+
+/* ---------- 2. Real Estate Investment ROI Predictor ---------- */
+
+let fullLeaderboardData = [];
+
+async function loadRoiLeaderboard(filterBorough = "All") {
+  try {
+    const res = await fetch(apiBase + "/api/roi-leaderboard");
+    if (!res.ok) return;
+    const data = await res.json();
+    fullLeaderboardData = data.leaderboard || [];
+    renderLeaderboardTable(filterBorough);
+  } catch (err) {
+    console.error("ROI Leaderboard Error:", err);
+  }
+}
+
+function renderLeaderboardTable(filterBorough = "All") {
+  const tbody = $("#roi-leaderboard-body");
+  tbody.replaceChildren();
+
+  const filtered = filterBorough === "All"
+    ? fullLeaderboardData
+    : fullLeaderboardData.filter(item => item.borough === filterBorough);
+
+  filtered.forEach((item, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><strong>#${index + 1} ${item.neighbourhood}</strong></td>
+      <td><span class="chip-sm">${item.borough}</span></td>
+      <td>$${Math.round(item.median_price).toLocaleString()}</td>
+      <td style="color: var(--private); font-weight: 600;">$${Math.round(item.gross_revenue).toLocaleString()}</td>
+      <td>$${Math.round(item.net_operating_income).toLocaleString()}</td>
+      <td><strong style="color: var(--signal); font-size: 1.05em;">${item.cap_rate}%</strong></td>
+      <td>${item.cash_on_cash}%</td>
+      <td>${item.payback_years} yrs</td>
+      <td><span class="badge-grade">${item.grade}</span></td>
+      <td><button type="button" class="link-btn load-roi-btn">Simulate</button></td>
+    `;
+    $(".load-roi-btn", tr).addEventListener("click", () => {
+      $("#roi-borough").value = item.borough;
+      $("#roi-neighbourhood").value = item.neighbourhood;
+      $("#roi-price").value = item.median_price;
+      calculateCustomRoi();
+      $("#btn-calc-roi").scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+$$("#roi-borough-filter button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    $$("#roi-borough-filter button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderLeaderboardTable(btn.dataset.bfilter);
+  });
+});
+
+async function calculateCustomRoi() {
+  const borough = $("#roi-borough").value;
+  const neighbourhood = $("#roi-neighbourhood").value;
+  const custom_property_price = parseFloat($("#roi-price").value) || 600000;
+  const down_payment_pct = parseFloat($("#roi-down").value) || 25;
+  const mortgage_interest_pct = parseFloat($("#roi-rate").value) || 6.75;
+
+  try {
+    const res = await fetch(apiBase + "/api/roi-predictor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        neighbourhood_group: borough,
+        neighbourhood: neighbourhood,
+        custom_property_price: custom_property_price,
+        down_payment_pct: down_payment_pct,
+        mortgage_interest_pct: mortgage_interest_pct
+      })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    $("#roi-kpi-cap").textContent = `${data.cap_rate_pct}%`;
+    $("#roi-kpi-grade").textContent = data.investment_grade;
+    $("#roi-kpi-coc").textContent = `${data.cash_on_cash_pct}%`;
+    $("#roi-kpi-cashflow").textContent = `${data.monthly_cash_flow >= 0 ? '+' : ''}$${Math.round(data.monthly_cash_flow).toLocaleString()} / mo`;
+    $("#roi-kpi-payback").textContent = `${data.payback_years} yrs`;
+    $("#roi-kpi-breakeven").textContent = `Breakeven: ${data.breakeven_nights} nights/yr (${data.breakeven_occupancy_pct}%)`;
+
+    // Render Waterfall
+    const waterfall = $("#roi-waterfall");
+    waterfall.replaceChildren();
+
+    const items = [
+      { label: "Gross Annual Airbnb Revenue (Booked nights × ADR)", val: `+$${Math.round(data.gross_annual_revenue).toLocaleString()}`, color: "var(--private)" },
+      { label: "Property Taxes (NYC ~1.1%)", val: `-$${Math.round(data.annual_expenses.property_tax).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Insurance & Common HOA/Charges", val: `-$${Math.round(data.annual_expenses.insurance_hoa).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Cleaning & Turnover Expenses", val: `-$${Math.round(data.annual_expenses.cleaning_turnover).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Airbnb Host Platform Fee (3%)", val: `-$${Math.round(data.annual_expenses.airbnb_service_fee).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Maintenance & Utilities (ConEd, Wi-Fi)", val: `-$${Math.round(data.annual_expenses.maintenance_utilities).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Total Annual Operating Expenses", val: `-$${Math.round(data.annual_expenses.total_expenses).toLocaleString()}`, color: "var(--danger)", bold: true },
+      { label: "Net Operating Income (NOI)", val: `$${Math.round(data.net_operating_income).toLocaleString()}`, color: "var(--signal)", bold: true, isTotal: true },
+      { label: "Annual Debt Service (Principal & Interest)", val: `-$${Math.round(data.monthly_mortgage * 12).toLocaleString()}`, color: "var(--muted)" },
+      { label: "Net Pre-Tax Investor Annual Cash Flow", val: `${data.annual_cash_flow >= 0 ? '+' : ''}$${Math.round(data.annual_cash_flow).toLocaleString()}`, color: "var(--private)", bold: true, isTotal: true }
+    ];
+
+    items.forEach(it => {
+      const row = document.createElement("div");
+      row.className = "waterfall-row" + (it.isTotal ? " total-row" : "");
+      row.innerHTML = `
+        <span style="${it.bold ? 'font-weight: 700;' : ''}">${it.label}</span>
+        <span style="color: ${it.color}; font-weight: 700;">${it.val}</span>
+      `;
+      waterfall.appendChild(row);
+    });
+
+  } catch (err) {
+    console.error("ROI calculation error:", err);
+  }
+}
+
+const ROI_BENCHMARK_PRICES = {
+  "Midtown": 1050000, "Williamsburg": 880000, "Bushwick": 630000,
+  "Hell's Kitchen": 960000, "Astoria": 540000, "Long Island City": 720000,
+  "Greenwich Village": 1450000, "Bedford-Stuyvesant": 680000, "East Village": 1150000,
+  "Crown Heights": 650000, "Harlem": 720000, "Flushing": 490000,
+  "Fordham": 310000, "Mott Haven": 360000, "St. George": 420000,
+  "Upper West Side": 1280000, "DUMBO": 1650000, "Park Slope": 1150000,
+  "Financial District": 1020000, "Jackson Heights": 450000
+};
+
+function populateRoiHoods(borough) {
+  const datalist = $("#roi-hoods-list");
+  if (!datalist) return;
+  datalist.replaceChildren();
+  const list = HOODS[borough] || [];
+  list.forEach(h => {
+    const opt = document.createElement("option");
+    opt.value = h;
+    datalist.appendChild(opt);
+  });
+}
+
+// Initial populate of neighbourhood datalist
+if ($("#roi-borough")) {
+  populateRoiHoods($("#roi-borough").value);
+}
+
+function setRoiHint(text, isReady = false) {
+  const hint = $("#roi-calc-hint");
+  if (!hint) return;
+  hint.textContent = text;
+  hint.style.color = isReady ? "var(--private)" : "var(--signal)";
+}
+
+$("#btn-calc-roi").addEventListener("click", async () => {
+  const btn = $("#btn-calc-roi");
+  const span = btn.querySelector("span");
+  const orig = span ? span.textContent : "Calculate Investment Returns";
+  if (span) span.textContent = "Calculating Returns…";
+  btn.disabled = true;
+
+  try {
+    await calculateCustomRoi();
+    setRoiHint("✓ Investment analysis calculated & updated!", true);
+    const resultsArea = $(".roi-results-display");
+    if (resultsArea) {
+      resultsArea.classList.remove("flash");
+      void resultsArea.offsetWidth;
+      resultsArea.classList.add("flash");
+    }
+  } finally {
+    if (span) span.textContent = orig;
+    btn.disabled = false;
+  }
+});
+
+$("#roi-borough").addEventListener("change", () => {
+  const b = $("#roi-borough").value;
+  populateRoiHoods(b);
+  if (b === "Manhattan") { $("#roi-neighbourhood").value = "Midtown"; $("#roi-price").value = 1050000; }
+  else if (b === "Brooklyn") { $("#roi-neighbourhood").value = "Bushwick"; $("#roi-price").value = 630000; }
+  else if (b === "Queens") { $("#roi-neighbourhood").value = "Astoria"; $("#roi-price").value = 540000; }
+  else if (b === "Bronx") { $("#roi-neighbourhood").value = "Fordham"; $("#roi-price").value = 310000; }
+  else if (b === "Staten Island") { $("#roi-neighbourhood").value = "St. George"; $("#roi-price").value = 420000; }
+  
+  setRoiHint(`Borough changed to ${b}. Click "Calculate Investment Returns" to update analysis.`);
+  // Note: calculateCustomRoi() is DELIBERATELY NOT called here so user has full control!
+});
+
+$("#roi-neighbourhood").addEventListener("change", () => {
+  const hood = $("#roi-neighbourhood").value.trim();
+  if (ROI_BENCHMARK_PRICES[hood]) {
+    $("#roi-price").value = ROI_BENCHMARK_PRICES[hood];
+  }
+  setRoiHint(`Neighbourhood selected. Click "Calculate Investment Returns" to analyze.`);
+  // No automatic calculation!
+});
+
+["#roi-price", "#roi-down", "#roi-rate"].forEach(sel => {
+  $(sel)?.addEventListener("input", () => {
+    setRoiHint(`Parameters adjusted. Click "Calculate Investment Returns" to update.`);
+  });
+});
+
+
+/* ---------- 3. NLP Based Review Sentiment Analysis ---------- */
+
+const SAMPLE_REVIEWS = {
+  superhost_loft: `The loft was sparkling clean and wonderfully spacious! Just 3 minutes walk to the L train at Bedford Ave.
+Super responsive host! When we needed extra towels, they were delivered in 20 minutes. The bed was like sleeping on a cloud.
+Incredible location in Williamsburg. Quiet at night because the bedroom faces the courtyard. Fast 300 Mbps Wi-Fi for remote work.
+Very clean bathroom and great water pressure in the shower. Excellent value for NYC!`,
+
+  mixed_midtown: `Location is unbeatable right in Midtown Manhattan, can walk to Times Square and Central Park easily.
+The Wi-Fi was unfortunately very slow and kept dropping during Zoom calls. Needs an upgrade.
+Street noise was quite loud throughout the night with sirens and traffic. Host provided earplugs which helped.
+The apartment was clean, check-in instructions were very clear and easy to follow. A bit expensive for the size.`,
+
+  budget_room: `Cheap price for Brooklyn, but the room was quite dusty and found hair on the sheets upon arrival.
+Host took 4 hours to reply when we arrived at the door, which was stressful in the rain.
+Good hot water in the shower and quiet residential street. Subway is about a 10 minute walk.
+Acceptable for an emergency budget stay, but cleanliness needs immediate attention.`
+};
+
+function setNlpHint(text, isReady = false) {
+  const hint = $("#nlp-calc-hint");
+  if (!hint) return;
+  hint.textContent = text;
+  hint.style.color = isReady ? "var(--private)" : "var(--signal)";
+}
+
+function loadSampleSentiment(key) {
+  $$(".preset-pill").forEach(p => p.classList.toggle("active", p.dataset.sentimentSample === key));
+  const text = SAMPLE_REVIEWS[key] || SAMPLE_REVIEWS.superhost_loft;
+  $("#sentiment-text").value = text;
+  setNlpHint("Preset reviews loaded into editor. Click 'Analyze Reviews with NLP' to analyze.");
+  // Note: runNlpSentiment() is DELIBERATELY NOT called automatically here!
+}
+
+$$(".preset-pill").forEach(btn => {
+  btn.addEventListener("click", () => loadSampleSentiment(btn.dataset.sentimentSample));
+});
+
+$("#sentiment-text")?.addEventListener("input", () => {
+  setNlpHint("Review text modified. Click 'Analyze Reviews with NLP' to run analysis.");
+});
+
+async function runNlpSentiment() {
+  const text = $("#sentiment-text").value.trim() || SAMPLE_REVIEWS.superhost_loft;
+
+  try {
+    const res = await fetch(apiBase + "/api/nlp-sentiment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviews: text })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    $("#nlp-score").textContent = data.overall_sentiment_score;
+    $("#nlp-label").textContent = data.sentiment_label;
+    $("#nlp-stars").textContent = `⭐ ${data.equivalent_star_rating} / 5.0 Rating Equivalent`;
+    $("#nlp-summary").textContent = `Evaluated across ${data.reviews_analyzed_count} guest sentences using NLP polarity lexicon & aspect matching.`;
+
+    // Aspect Cards
+    const aspectGrid = $("#nlp-aspects");
+    aspectGrid.replaceChildren();
+
+    const aspectIcons = {
+      "Cleanliness": "🧹",
+      "Location & Transit": "📍",
+      "Amenities & Comfort": "🛋️",
+      "Host & Communication": "🤝",
+      "Noise & Sleep": "🌙",
+      "Value for Money": "💎"
+    };
+
+    Object.entries(data.aspect_breakdown).forEach(([name, info]) => {
+      const card = document.createElement("div");
+      card.className = "aspect-card";
+      const icon = aspectIcons[name] || "✨";
+      const colorClass = info.score >= 80 ? "" : (info.score >= 65 ? "amber" : "red");
+
+      card.innerHTML = `
+        <div class="aspect-header">
+          <span>${icon} <strong>${name}</strong></span>
+          <span style="font-weight: 700; color: ${info.score >= 80 ? 'var(--private)' : (info.score >= 65 ? 'var(--signal)' : 'var(--danger)')};">
+            ${info.score}% · ${info.status}
+          </span>
+        </div>
+        <div class="aspect-score-bar">
+          <div class="aspect-fill ${colorClass}" style="width: ${info.score}%;"></div>
+        </div>
+      `;
+      aspectGrid.appendChild(card);
+    });
+
+    // Quotes
+    const posList = $("#nlp-pos-quotes");
+    posList.replaceChildren();
+    data.positive_highlights.forEach(q => {
+      const li = document.createElement("li");
+      li.className = "quote-item";
+      li.textContent = `"${q}"`;
+      posList.appendChild(li);
+    });
+
+    const negList = $("#nlp-neg-quotes");
+    negList.replaceChildren();
+    data.critical_pain_points.forEach(q => {
+      const li = document.createElement("li");
+      li.className = "quote-item";
+      li.textContent = `"${q}"`;
+      negList.appendChild(li);
+    });
+
+    // Playbook
+    const playbookList = $("#nlp-playbook-list");
+    playbookList.replaceChildren();
+    data.actionable_host_recommendations.forEach(rec => {
+      const li = document.createElement("li");
+      li.textContent = rec;
+      playbookList.appendChild(li);
+    });
+
+  } catch (err) {
+    console.error("NLP Sentiment Error:", err);
+  }
+}
+
+$("#btn-run-sentiment").addEventListener("click", async () => {
+  const btn = $("#btn-run-sentiment");
+  const span = btn.querySelector("span");
+  const orig = span ? span.textContent : "Analyze Reviews with NLP";
+  if (span) span.textContent = "Analyzing with NLP…";
+  btn.disabled = true;
+
+  try {
+    await runNlpSentiment();
+    setNlpHint("✓ NLP review sentiment analysis complete!", true);
+    const resultsArea = $(".sentiment-results-card");
+    if (resultsArea) {
+      resultsArea.classList.remove("flash");
+      void resultsArea.offsetWidth;
+      resultsArea.classList.add("flash");
+    }
+  } finally {
+    if (span) span.textContent = orig;
+    btn.disabled = false;
+  }
+});
+
+
+/* ---------- 4. 'What-If' Scenario Revenue Simulator ---------- */
+
+function populateSimHoods(borough) {
+  const datalist = $("#sim-hoods-list");
+  if (!datalist) return;
+  datalist.replaceChildren();
+  const list = HOODS[borough] || [];
+  list.forEach(h => {
+    const opt = document.createElement("option");
+    opt.value = h;
+    datalist.appendChild(opt);
+  });
+}
+
+if ($("#sim-borough")) {
+  populateSimHoods($("#sim-borough").value);
+}
+
+function setSimHint(text, isReady = false) {
+  const hint = $("#sim-calc-hint");
+  if (!hint) return;
+  hint.textContent = text;
+  hint.style.color = isReady ? "var(--private)" : "var(--signal)";
+}
+
+// Live range value sync (visual update ONLY, no auto-calculation!)
+const simMinSlider = $("#sim-min-nights");
+const simPriceSlider = $("#sim-price");
+const simCleanSlider = $("#sim-cleaning");
+
+simMinSlider.addEventListener("input", () => {
+  $("#sim-min-val").textContent = `${simMinSlider.value} ${simMinSlider.value == 1 ? 'night' : 'nights'}`;
+  paintRange(simMinSlider);
+  setSimHint("Minimum nights changed. Click 'Simulate Scenario Impact' to view results.");
+});
+
+simPriceSlider.addEventListener("input", () => {
+  $("#sim-price-val").textContent = `$${simPriceSlider.value} / night`;
+  paintRange(simPriceSlider);
+  setSimHint("Nightly price changed. Click 'Simulate Scenario Impact' to view results.");
+});
+
+simCleanSlider.addEventListener("input", () => {
+  $("#sim-cleaning-val").textContent = `$${simCleanSlider.value}`;
+  paintRange(simCleanSlider);
+  setSimHint("Cleaning fee changed. Click 'Simulate Scenario Impact' to view results.");
+});
+
+$$('input[name="sim-room"]').forEach(r => {
+  r.addEventListener("change", () => {
+    setSimHint("Room type conversion selected. Click 'Simulate Scenario Impact' to run.");
+  });
+});
+
+$("#sim-borough").addEventListener("change", () => {
+  const b = $("#sim-borough").value;
+  populateSimHoods(b);
+  if (b === "Manhattan") $("#sim-hood").value = "Midtown";
+  else if (b === "Brooklyn") $("#sim-hood").value = "Williamsburg";
+  else if (b === "Queens") $("#sim-hood").value = "Astoria";
+  else if (b === "Bronx") $("#sim-hood").value = "Fordham";
+  else if (b === "Staten Island") $("#sim-hood").value = "St. George";
+  setSimHint(`Borough changed to ${b}. Click 'Simulate Scenario Impact' to run.`);
+});
+
+$("#sim-hood")?.addEventListener("change", () => {
+  setSimHint("Neighbourhood adjusted. Click 'Simulate Scenario Impact' to run.");
+});
+
+$$(".sim-switch input").forEach(s => {
+  s.addEventListener("change", () => {
+    setSimHint("Feature toggled. Click 'Simulate Scenario Impact' to update simulation.");
+  });
+});
+
+async function runWhatIfSimulation() {
+  const borough = $("#sim-borough").value;
+  const hood = $("#sim-hood").value || "Williamsburg";
+  const simRoom = document.querySelector('input[name="sim-room"]:checked')?.value || "Entire home/apt";
+  const simMin = parseInt($("#sim-min-nights").value, 10);
+  const simPrice = parseFloat($("#sim-price").value);
+  const simCleaning = parseFloat($("#sim-cleaning").value);
+  const simInstant = $("#sim-instant").checked;
+  const simSuperhost = $("#sim-superhost").checked;
+  const simWifi = $("#sim-wifi").checked;
+  const simSelfCheck = $("#sim-selfcheck").checked;
+
+  const amenitiesCount = 3 + (simWifi ? 1 : 0) + (simSelfCheck ? 1 : 0);
+
+  // Baseline config (e.g. 1-night min, Private room, standard pricing)
+  const currentConfig = {
+    neighbourhood_group: borough,
+    neighbourhood: hood,
+    room_type: "Private room",
+    price: 95,
+    minimum_nights: 1,
+    cleaning_fee: 35
+  };
+
+  const simulatedConfig = {
+    room_type: simRoom,
+    price: simPrice,
+    minimum_nights: simMin,
+    cleaning_fee: simCleaning,
+    instant_book: simInstant,
+    superhost: simSuperhost,
+    amenities_count: amenitiesCount
+  };
+
+  try {
+    const res = await fetch(apiBase + "/api/what-if-simulate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ current_config: currentConfig, simulated_config: simulatedConfig })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    // Verdict Banner
+    const isWin = data.impact_deltas.monthly_income_delta >= 0;
+    const banner = $("#sim-verdict-banner");
+    banner.style.background = isWin ? "rgba(52, 209, 127, 0.12)" : "rgba(255, 122, 122, 0.12)";
+    banner.style.borderColor = isWin ? "rgba(52, 209, 127, 0.35)" : "rgba(255, 122, 122, 0.35)";
+    $(".verdict-icon", banner).textContent = isWin ? "🚀" : "⚠️";
+    $("#sim-verdict-text").textContent = data.verdict_recommendation;
+
+    // Baseline Box
+    $("#sim-base-income").textContent = `$${Math.round(data.baseline.monthly_net_income).toLocaleString()}`;
+    $("#sim-base-occ").textContent = `${data.baseline.occupancy_rate_pct}% (${data.baseline.monthly_booked_nights} nights)`;
+    $("#sim-base-cleanings").textContent = `${data.baseline.monthly_turnovers} turnovers/mo`;
+
+    // Simulated Box
+    $("#sim-res-income").textContent = `$${Math.round(data.simulated.monthly_net_income).toLocaleString()}`;
+    $("#sim-res-occ").textContent = `${data.simulated.occupancy_rate_pct}% (${data.simulated.monthly_booked_nights} nights)`;
+    $("#sim-res-cleanings").textContent = `${data.simulated.monthly_turnovers} turnovers/mo`;
+
+    // Impact Deltas
+    const deltaInc = data.impact_deltas.monthly_income_delta;
+    const deltaAnnual = data.impact_deltas.annual_income_delta;
+    $("#sim-delta-monthly").textContent = `${deltaInc >= 0 ? '+' : ''}$${Math.round(deltaInc).toLocaleString()}`;
+    $("#sim-delta-pct").textContent = `${deltaInc >= 0 ? '+' : ''}${data.impact_deltas.monthly_income_pct_delta}% monthly income shift`;
+    $("#sim-delta-annual").textContent = `${deltaAnnual >= 0 ? '+' : ''}$${Math.round(deltaAnnual).toLocaleString()} / yr`;
+
+    const hrsSaved = data.impact_deltas.host_hours_saved_per_month;
+    $("#sim-delta-hours").textContent = hrsSaved >= 0 ? `${hrsSaved} hrs saved` : `${Math.abs(hrsSaved)} extra hrs labor`;
+    const cleanDelta = data.impact_deltas.monthly_turnovers_delta;
+    $("#sim-delta-cleanings").textContent = `${cleanDelta <= 0 ? Math.abs(cleanDelta) + ' fewer' : '+' + cleanDelta + ' additional'} cleanings/month`;
+
+  } catch (err) {
+    console.error("What-If Simulation Error:", err);
+  }
+}
+
+$("#btn-run-sim").addEventListener("click", async () => {
+  const btn = $("#btn-run-sim");
+  const span = btn.querySelector("span");
+  const orig = span ? span.textContent : "Simulate Scenario Impact";
+  if (span) span.textContent = "Simulating Scenario Impact…";
+  btn.disabled = true;
+
+  try {
+    await runWhatIfSimulation();
+    setSimHint("✓ Scenario impact simulated & updated!", true);
+    const resultsArea = $(".sim-outputs-col");
+    if (resultsArea) {
+      resultsArea.classList.remove("flash");
+      void resultsArea.offsetWidth;
+      resultsArea.classList.add("flash");
+    }
+  } finally {
+    if (span) span.textContent = orig;
+    btn.disabled = false;
+  }
+});
+
+// Pre-sync simulator sliders visually
+paintRange(simMinSlider);
+paintRange(simPriceSlider);
+paintRange(simCleanSlider);
