@@ -1229,21 +1229,21 @@ async function calculateCustomRoi() {
     $("#roi-kpi-payback").textContent = `${data.payback_years} yrs`;
     $("#roi-kpi-breakeven").textContent = `Breakeven: ${data.breakeven_nights} nights/yr (${data.breakeven_occupancy_pct}%)`;
 
-    // Render Waterfall with clean English + Marathi labels
+    // Render Waterfall with clean English labels
     const waterfall = $("#roi-waterfall");
     waterfall.replaceChildren();
 
     const items = [
-      { label: "Gross Annual Airbnb Revenue (वार्षिक एकूण उत्पन्न)", val: `+$${Math.round(data.gross_annual_revenue).toLocaleString()}`, color: "var(--private)" },
-      { label: "Property Taxes (NYC ~0.85% मालमत्ता कर)", val: `-$${Math.round(data.annual_expenses.property_tax).toLocaleString()}`, color: "var(--danger)" },
-      { label: "Building Insurance & Common Charges (इन्शुरन्स व मेन्टेनन्स)", val: `-$${Math.round(data.annual_expenses.insurance_hoa).toLocaleString()}`, color: "var(--danger)" },
-      { label: "Turnover Linens & Supplies (स्वच्छता साहित्य व देखभाल)", val: `-$${Math.round(data.annual_expenses.cleaning_turnover).toLocaleString()}`, color: "var(--danger)" },
-      { label: "Airbnb Host Platform Fee (3% प्लॅटफॉर्म फी)", val: `-$${Math.round(data.annual_expenses.airbnb_service_fee).toLocaleString()}`, color: "var(--danger)" },
-      { label: "High-Speed Wi-Fi & Utilities (लाईट बिल व वाय-फाय)", val: `-$${Math.round(data.annual_expenses.maintenance_utilities).toLocaleString()}`, color: "var(--danger)" },
-      { label: "Total Annual Operating Expenses (एकूण वार्षिक ऑपरेटिंग खर्च)", val: `-$${Math.round(data.annual_expenses.total_expenses).toLocaleString()}`, color: "var(--danger)", bold: true },
-      { label: "Net Operating Income (NOI / निव्वळ ऑपरेटिंग उत्पन्न)", val: `$${Math.round(data.net_operating_income).toLocaleString()}`, color: "var(--signal)", bold: true, isTotal: true },
-      { label: "Annual Bank Loan Payment (Principal & Interest / वार्षिक कर्ज हप्ता)", val: `-$${Math.round(data.monthly_mortgage * 12).toLocaleString()}`, color: "var(--muted)" },
-      { label: "Net Pre-Tax Investor Annual Profit (वार्षिक निव्वळ नफा खिशात)", val: `${data.annual_cash_flow >= 0 ? '+' : ''}$${Math.round(data.annual_cash_flow).toLocaleString()}`, color: "var(--private)", bold: true, isTotal: true }
+      { label: "Gross Annual Airbnb Revenue", val: `+$${Math.round(data.gross_annual_revenue).toLocaleString()}`, color: "var(--private)" },
+      { label: "Property Taxes (NYC ~0.85%)", val: `-$${Math.round(data.annual_expenses.property_tax).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Building Insurance & Common Charges", val: `-$${Math.round(data.annual_expenses.insurance_hoa).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Turnover Linens & Supplies", val: `-$${Math.round(data.annual_expenses.cleaning_turnover).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Airbnb Host Platform Fee (3%)", val: `-$${Math.round(data.annual_expenses.airbnb_service_fee).toLocaleString()}`, color: "var(--danger)" },
+      { label: "High-Speed Wi-Fi & Utilities", val: `-$${Math.round(data.annual_expenses.maintenance_utilities).toLocaleString()}`, color: "var(--danger)" },
+      { label: "Total Annual Operating Expenses", val: `-$${Math.round(data.annual_expenses.total_expenses).toLocaleString()}`, color: "var(--danger)", bold: true },
+      { label: "Net Operating Income (NOI)", val: `$${Math.round(data.net_operating_income).toLocaleString()}`, color: "var(--signal)", bold: true, isTotal: true },
+      { label: "Annual Bank Loan Payment (Principal & Interest)", val: `-$${Math.round(data.monthly_mortgage * 12).toLocaleString()}`, color: "var(--muted)" },
+      { label: "Net Pre-Tax Investor Annual Profit", val: `${data.annual_cash_flow >= 0 ? '+' : ''}$${Math.round(data.annual_cash_flow).toLocaleString()}`, color: "var(--private)", bold: true, isTotal: true }
     ];
 
     items.forEach(it => {
